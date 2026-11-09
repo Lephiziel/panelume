@@ -5,16 +5,37 @@
 <h1 align="center">Panelume</h1>
 
 <p align="center">
-  <strong>Scroll through a chapter. Come back to the exact panel.</strong><br>
-  Android 8.0+ · Java · English and Russian UI
+  <strong>Read manhwa, manga, manhua, webtoons and comics on Android.</strong><br>
+  Scroll through a chapter and come back to the exact spot you left.
 </p>
 
 <p align="center">
-  <a href="#get-started">Get started</a> ·
-  <a href="#online-catalogues">Online catalogues</a> ·
-  <a href="#build-from-source">Build from source</a> ·
-  <a href="https://github.com/Lephiziel/panelume/issues/1">Reader feedback</a>
+  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.3/Panelume-0.2.3.apk"><img src="https://img.shields.io/badge/Download_APK-0.2.3-F7AE72?style=for-the-badge&logo=android&logoColor=20211F" alt="Download Panelume 0.2.3 APK"></a>
 </p>
+
+<p align="center">
+  <strong>Ad-free</strong> · Android 8.0+ · English and Russian
+</p>
+
+<p align="center">
+  <a href="#install-panelume">How to install</a> ·
+  <a href="#what-you-can-read">What you can read</a> ·
+  <a href="https://github.com/Lephiziel/panelume/issues/1">Share feedback</a>
+</p>
+
+## Install Panelume
+
+1. On your phone, tap **Download APK** above or open the [release page](https://github.com/Lephiziel/panelume/releases/tag/v0.2.3) and select `Panelume-0.2.3.apk` under **Assets**.
+2. Open the downloaded file and follow Android’s installation prompt. If Android asks, allow your browser or file manager to install apps.
+3. Open **Panelume**, search for a title and choose a source. Tap a chapter to start reading.
+
+**Already using Panelume Next 0.2.2?** Install this APK over it to keep your library and progress. Panelume 0.2.1 has a separate library.
+
+## What you can read
+
+Read **manhwa, manga, manhua, webtoons and other comics**. Search the available English-language catalogues or import your own **PDF, CBZ or ZIP** files from **Library → +**.
+
+**Ad-free reading.** Panelume itself shows no ads. External sites may show ads or require an episode to be unlocked on their site.
 
 ## Reading in Panelume
 
@@ -25,14 +46,6 @@
 | **Take a series offline** | Save individual chapters or queue a series. See progress, retry failed downloads or cancel from Downloads. Series posters stay visible offline once loaded. |
 | **Bring your own files** | Open PDF, CBZ or ZIP image archives from your device or a direct HTTPS link. |
 | **Track reading time** | See totals by day and chapter. The timer runs while the reader is visible, the app has focus and the device is awake and unlocked. |
-
-## Get started
-
-1. Install the APK on Android 8.0 or newer. English is selected by default. You can switch to Russian in Settings.
-2. Open **Search**, enter a title and choose a source. Tap a chapter to open it, or use **Download all** to queue the series.
-3. To read a file you already have, open **Library → +** and select it.
-
-**Upgrading from 0.2.2:** The distributed APK keeps the same Android application ID and signing key. It appears as **Panelume** after installation. Version 0.2.1 has its own library and can coexist with it.
 
 ## Online catalogues
 
@@ -51,7 +64,10 @@ Try **Viral Hit** or **How to Fight** to compare listings across sources. Chapte
 - Use the [issue picker](https://github.com/Lephiziel/panelume/issues/new/choose) for bug reports and feature requests. For a bug, include your app version, Android version and steps to reproduce.
 - See [what changed](CHANGELOG.md) between versions.
 
-## Build from source
+## For developers
+
+<details>
+<summary>Build from source</summary>
 
 Use **JDK 17**, **Android SDK Platform 35** and **Gradle 8.9**. Open the project in Android Studio or run:
 
@@ -67,6 +83,8 @@ adb install -r out/Panelume-0.2.3.apk
 ```
 
 To update an existing installation, sign with its original key. The standalone script accepts a keystore path through `PANELUME_DEBUG_KEYSTORE`.
+
+</details>
 
 ## Credits
 
