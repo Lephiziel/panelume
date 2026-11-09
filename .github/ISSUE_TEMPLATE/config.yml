@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: General reader feedback
+    url: https://github.com/Lephiziel/panelume/issues/1
+    about: Share how a reading session went and what could be better.

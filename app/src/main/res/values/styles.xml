@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.Panelume" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">#171817</item>
+        <item name="android:colorBackground">#171817</item>
+        <item name="android:colorAccent">#F7AE72</item>
+        <item name="android:statusBarColor">#171817</item>
+        <item name="android:navigationBarColor">#171817</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <color name="launcher_background">#20211F</color>
+</resources>

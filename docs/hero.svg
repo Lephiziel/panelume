@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" width="1000" height="270" role="img" aria-label="Panelume, a native Android reader for vertical comics">
+  <defs>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#f7ae72" stroke-opacity=".09"/></pattern>
+  </defs>
+  <rect width="1000" height="270" rx="22" fill="#161816"/>
+  <rect x="1" y="1" width="998" height="268" rx="21" fill="none" stroke="#3b3830"/>
+  <path d="M724 1H978Q999 1 999 22V248Q999 269 978 269H654Z" fill="url(#grid)"/>
+  <g transform="translate(755 54) scale(1.5)">
+    <rect width="108" height="108" rx="24" fill="#20211f" stroke="#534135"/>
+    <g transform="translate(8.1 8.1) scale(.85)">
+      <path fill="#f7ae72" fill-rule="evenodd" d="M31 27H77V52L31 59ZM36 32H72V43L36 50Z M31 65L77 58V71L31 78Z M31 84L60 79V84L31 89Z"/>
+    </g>
+  </g>
+  <path d="M60 61H92" stroke="#f7ae72" stroke-width="3"/>
+  <text x="106" y="66" fill="#f7ae72" font-family="monospace" font-size="15" letter-spacing="3">ANDROID COMIC READER</text>
+  <text x="56" y="155" fill="#faf2e8" font-family="sans-serif" font-size="84" font-weight="700" letter-spacing="-3">Panelume</text>
+  <text x="60" y="207" fill="#c4bcb0" font-family="sans-serif" font-size="22">A quiet place to read vertical comics.</text>
+</svg>
