@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="124" viewBox="0 0 720 124" role="img" aria-label="Find a title, read or save a chapter, then resume at your bookmark">
+  <rect x="1" y="1" width="718" height="122" rx="18" fill="#161816" stroke="#3b3830"/>
+  <path d="M240 23v78m240-78v78" stroke="#3b3830"/>
+  <g fill="none" stroke="#f7ae72" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="115" cy="42" r="12"/><path d="m124 51 12 12"/>
+    <rect x="343" y="29" width="34" height="34" rx="5"/><path d="M349 47h22m-22 8h15m-15-17h22"/>
+    <path d="M587 33a4 4 0 0 1 4-4h18a4 4 0 0 1 4 4v31l-13-8-13 8z"/>
+  </g>
+  <g fill="#faf2e8" text-anchor="middle" font-family="system-ui, sans-serif" font-size="19" font-weight="600">
+    <text x="120" y="94">Find a title</text>
+    <text x="360" y="94">Read or save</text>
+    <text x="600" y="94">Resume later</text>
+  </g>
+</svg>

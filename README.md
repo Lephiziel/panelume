@@ -19,7 +19,8 @@
 
 <p align="center">
   <a href="#install-panelume">How to install</a> ·
-  <a href="#what-you-can-read">What you can read</a> ·
+  <a href="docs/README.ru.md">Русский</a> ·
+  <a href="ROADMAP.md">Roadmap</a> ·
   <a href="https://github.com/Lephiziel/panelume/issues/1">Share feedback</a>
 </p>
 
@@ -38,6 +39,10 @@ Read **manhwa, manga, manhua, webtoons and other comics**. Search the available 
 **Ad-free reading.** Panelume itself shows no ads. External sites may show ads or require an episode to be unlocked on their site.
 
 ## Reading in Panelume
+
+<p align="center">
+  <img src="docs/reading-flow.svg" width="640" alt="Find a title, read or save a chapter, and pick up where you left off">
+</p>
 
 | Feature | What you get |
 | :-- | :-- |
@@ -62,12 +67,14 @@ Try **Viral Hit** or **How to Fight** to compare listings across sources. Chapte
 
 - Share your experience in the [reader feedback thread](https://github.com/Lephiziel/panelume/issues/1). English and Russian are welcome.
 - Use the [issue picker](https://github.com/Lephiziel/panelume/issues/new/choose) for bug reports and feature requests. For a bug, include your app version, Android version and steps to reproduce.
-- See [what changed](CHANGELOG.md) between versions.
+- See [what changed](CHANGELOG.md) and [what's planned](ROADMAP.md).
 
 ## For developers
 
 <details>
 <summary>Build from source</summary>
+
+[Android build checks](https://github.com/Lephiziel/panelume/actions/workflows/android.yml)
 
 Use **JDK 17**, **Android SDK Platform 35** and **Gradle 8.9**. Open the project in Android Studio or run:
 
