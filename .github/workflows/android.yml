@@ -27,12 +27,14 @@ jobs:
           path: out/Panelume-0.2.4.apk
           if-no-files-found: error
           retention-days: 1
+      - name: Collect signing tool without any keys
+        run: |
+          mkdir -p out/signing-tools
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" out/signing-tools/apksigner.jar
       - name: Upload Android apksigner tooling for offline local signing
         uses: actions/upload-artifact@v4
         with:
           name: panelume-apksigner-tools
-          path: |
-            ${{ env.ANDROID_HOME }}/build-tools/35.0.0/lib/apksigner.jar
-            ${{ env.ANDROID_HOME }}/build-tools/35.0.0/apksigner
+          path: out/signing-tools/apksigner.jar
           if-no-files-found: error
           retention-days: 1
