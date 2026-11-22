@@ -20,3 +20,10 @@ jobs:
           "$sdkmanager" "platforms;android-35" "build-tools;35.0.0"
       - name: Build and verify APK
         run: ./tools/build-apk.sh
+      - name: Upload CI APK for local release signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: panelume-0.2.4-ci-apk
+          path: out/Panelume-0.2.4.apk
+          if-no-files-found: error
+          retention-days: 1
