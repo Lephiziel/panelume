@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 final class WeebCentralSource implements CatalogSource {
     private static final String WEB = "https://weebcentral.com";
     private static final String VIRAL_HIT = "01J76XYE8HKQ5KFPY5MRR9CNCR";
+    private static final String LOSER = "01J76XYGZR8CTMZ9C96TDDTNP8";
+    private static final String LOSER_URL = WEB + "/series/" + LOSER + "/My-Life-as-a-Loser";
     private static final String ULID = "[0-9A-HJKMNP-TV-Z]{26}";
     private static final Pattern SERIES_PATH = Pattern.compile("/series/(" + ULID + ")(?:/[^/]+)?/?");
     private static final Pattern CHAPTER_PATH = Pattern.compile("/chapters/(" + ULID + ")/?");
@@ -33,9 +35,29 @@ final class WeebCentralSource implements CatalogSource {
 
     @Override
     public Title knownTitle(String query) {
-        if (!Names.isViralHit(query)) return null;
-        return new Title(id(), VIRAL_HIT, "Viral Hit", WEB + "/series/" + VIRAL_HIT + "/Viral-Hit",
-            "https://temp.compsci88.com/cover/fallback/" + VIRAL_HIT + ".jpg", "");
+        if (Names.isViralHit(query)) {
+            return new Title(id(), VIRAL_HIT, "Viral Hit", WEB + "/series/" + VIRAL_HIT + "/Viral-Hit",
+                "https://temp.compsci88.com/cover/fallback/" + VIRAL_HIT + ".jpg", "");
+        }
+        if (Names.isMyLifeAsALoser(query)) {
+            return new Title(id(), LOSER, "My Life as a Loser", LOSER_URL, "", "");
+        }
+        // Allow pasting a direct Weeb Central series URL when its live search is unavailable.
+        if (query.startsWith("https://")) {
+            String address = path(query);
+            Matcher series = SERIES_PATH.matcher(address);
+            if (series.matches()) {
+                String seriesId = series.group(1);
+                if (seriesId.equals(LOSER)) {
+                    return new Title(id(), LOSER, "My Life as a Loser", LOSER_URL, "", "");
+                }
+                String tail = address.substring(address.indexOf(seriesId) + seriesId.length())
+                    .replace("/", "").replace('-', ' ').trim();
+                return new Title(id(), seriesId, tail.isEmpty() ? "Weeb Central series" : tail,
+                    WEB + address, "", "");
+            }
+        }
+        return null;
     }
 
     @Override
