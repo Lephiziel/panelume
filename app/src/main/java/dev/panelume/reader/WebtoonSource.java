@@ -30,6 +30,8 @@ final class WebtoonSource implements CatalogSource {
     private static final String VIRAL_HIT_URL = WEB + "/en/action/viral-hit/list?title_no=2268";
     private static final String VIRAL_HIT_COVER =
         "https://swebtoon-phinf.pstatic.net/20250204_162/1738646049154CFTNt_JPEG/2268.jpg?type=crop540_540";
+    private static final String LOSER_ID = "webtoon/3114";
+    private static final String LOSER_URL = WEB + "/en/drama/my-life-as-a-loser/list?title_no=3114";
     private final CatalogHttp http;
 
     WebtoonSource(CatalogHttp http) { this.http = http; }
@@ -52,6 +54,9 @@ final class WebtoonSource implements CatalogSource {
         Title link = query.startsWith("https://") ? titleLink(query, "", "") : null;
         if (Names.isViralHit(query) || (link != null && link.id.equals(VIRAL_HIT_ID))) {
             return new Title(id(), VIRAL_HIT_ID, "Viral Hit", VIRAL_HIT_URL, VIRAL_HIT_COVER, "");
+        }
+        if (Names.isMyLifeAsALoser(query) || (link != null && link.id.equals(LOSER_ID))) {
+            return new Title(id(), LOSER_ID, "My Life as a Loser", LOSER_URL, "", "");
         }
         return null;
     }
