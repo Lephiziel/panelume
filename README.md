@@ -61,7 +61,9 @@ Read **manhwa, manga, manhua, webtoons and other comics**. Search the available 
 | **MangaRead** | English catalogue and public chapter images. |
 | **MangaDex** | Korean series with English chapters, with source and translation-group credits. |
 
-Try **Viral Hit** or **How to Fight** to compare listings across sources. Chapter availability depends on the source.
+Try **Viral Hit** or **How to Fight** to compare listings across sources. Search also recognizes **My Life as a Loser**, **Loser Life**, **Loser's Life**, and **Life Completely Ruined** and shows its listings from WEBTOON and Weeb Central without relying on live catalogue search. You can paste a direct Weeb Central series URL into the search field as a fallback. Chapter availability depends on the source; WEBTOON's Daily Pass episodes must be unlocked on WEBTOON.
+
+**Keep your reading progress when updating:** install the newer APK **over** Panelume Next 0.2.3, without uninstalling or clearing its data. The APK must use the same Android application ID and compatible signing key as the installed version. The series database, chapter bookmarks, offline files and reading statistics remain in the existing app data; this change introduces no database migration. A differently signed APK cannot be installed as an in-place update.
 
 ## Feedback and contributions
 
