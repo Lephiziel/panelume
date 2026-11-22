@@ -48,6 +48,13 @@ final class Names {
         return key.equals("viral hit") || key.equals("how to fight");
     }
 
+    static boolean isMyLifeAsALoser(String title) {
+        String key = key(title);
+        return key.equals("my life as a loser") || key.equals("loser life")
+            || key.equals("losers life") || key.equals("life completely ruined")
+            || key.equals("insaeng jonmang") || key.equals("inseng jon mang");
+    }
+
     static String normalizeNumber(String value) {
         String input = value.trim().replace(',', '.');
         if (input.isEmpty()) return "";
