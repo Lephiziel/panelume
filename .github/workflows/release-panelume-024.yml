@@ -1,0 +1,58 @@
+name: Publish Panelume 0.2.4 APK
+on:
+  push:
+    branches:
+      - release/panelume-0.2.4
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: panelume-0.2.4-ci-apk
+          path: out
+          github-token: ${{ github.token }}
+          run-id: 45039797013
+      - name: Recover privately signed APK using reproducible public binary delta
+        run: |
+          set -euo pipefail
+          echo "4cbdee04b3454c4a66d5e09ba3e009e8f0d265a0346b34453205b3893abfdedb  out/Panelume-0.2.4.apk" | sha256sum -c
+          python3 - <<'PY'
+          import base64, zlib
+          from pathlib import Path
+          encoded = Path(".github/release/0.2.4-signature.patch.zlib.b64").read_text().strip()
+          Path("/tmp/panelume-024.patch").write_bytes(zlib.decompress(base64.b64decode(encoded)))
+          PY
+          cp out/Panelume-0.2.4.apk app.apk
+          git apply --binary /tmp/panelume-024.patch
+          echo "2f4a4749af8dae84d1de3501e537d739b701b2ba88f4e59f8d016939782b6403  app.apk" | sha256sum -c
+          mv -f app.apk out/Panelume-0.2.4.apk
+      - name: Verify Android application identity and original release certificate
+        run: |
+          set -euo pipefail
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          "$tools/apksigner" verify --verbose --print-certs out/Panelume-0.2.4.apk | tee /tmp/apksigner-check.txt
+          grep -F "Signer #1 certificate SHA-256 digest: e71850cc090b48c0f70c9af1aeb0f8a123c128b423aa008fd46861337f1cfec9" /tmp/apksigner-check.txt
+          "$tools/aapt2" dump badging out/Panelume-0.2.4.apk | tee /tmp/panelume-badging.txt
+          grep -E "^package: name='dev.panelume.reader.next' versionCode='6' versionName='0.2.4'" /tmp/panelume-badging.txt
+      - name: Publish official GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.2.4 --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release v0.2.4 already exists; refusing to overwrite."
+            exit 1
+          fi
+          gh release create v0.2.4 out/Panelume-0.2.4.apk \
+            --repo "${{ github.repository }}" \
+            --target 4beda66e498fdc4fd2e65f0ccca16a673f87f6f0 \
+            --title "Panelume 0.2.4" \
+            --notes "Micro-update from 0.2.3: Adds the Atsumaru catalogue and improves discovery of My Life as a Loser / Loser Life. Installs over Panelume Next 0.2.3 (same application ID and signing certificate), preserving app data. Do not uninstall the current app. Catalogue chapter availability depends on providers. Signed APK SHA-256: 2f4a4749af8dae84d1de3501e537d739b701b2ba88f4e59f8d016939782b6403."
