@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.3/Panelume-0.2.3.apk"><img src="https://img.shields.io/badge/Download_APK-0.2.3-F7AE72?style=for-the-badge&logo=android&logoColor=20211F" alt="Download Panelume 0.2.3 APK"></a>
+  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.4/Panelume-0.2.4.apk"><img src="https://img.shields.io/badge/Download_APK-0.2.4-F7AE72?style=for-the-badge&logo=android&logoColor=20211F" alt="Download Panelume 0.2.4 APK"></a>
 </p>
 
 <p align="center">
@@ -26,11 +26,11 @@
 
 ## Install Panelume
 
-1. On your phone, tap **Download APK** above or open the [release page](https://github.com/Lephiziel/panelume/releases/tag/v0.2.3) and select `Panelume-0.2.3.apk` under **Assets**.
+1. On your phone, tap **Download APK** above or open the [release page](https://github.com/Lephiziel/panelume/releases/tag/v0.2.4) and select `Panelume-0.2.4.apk` under **Assets**.
 2. Open the downloaded file and follow Android’s installation prompt. If Android asks, allow your browser or file manager to install apps.
 3. Open **Panelume**, search for a title and choose a source. Tap a chapter to start reading.
 
-**Already using Panelume Next 0.2.2?** Install this APK over it to keep your library and progress. Panelume 0.2.1 has a separate library.
+**Already using Panelume 0.2.3 or Panelume Next 0.2.2?** Install this APK over it without uninstalling to keep your library and reading progress. Panelume 0.2.1 has a separate library.
 
 ## What you can read
 
@@ -101,6 +101,6 @@ To update an existing installation, sign with its original key. The standalone s
 The WEBTOON adapter ports episode discovery and page extraction from [Zehina’s Webtoon-Downloader](https://github.com/Zehina/Webtoon-Downloader). See its [MIT notice](app/src/main/assets/third-party/webtoon-downloader-MIT.txt).
 
 
-### 0.2.4 source-discovery candidate
+### 0.2.4 source-discovery update
 
-The development branch adds Atsumaru as a catalogue source and alternate-title lookup for My Life as a Loser. Its availability is subject to upstream catalogues and licensing. **Do not install a CI/debug APK as an upgrade unless its signer matches the installed APK.** The build script can create a fresh debug key; a fresh key is not the key used for a past published release. The repository does not currently include the private 0.2.3 release signing key. Obtain the original keystore (do not commit it) and set `PANELUME_DEBUG_KEYSTORE` to its path for an in-place upgrade build.
+Version 0.2.4 adds Atsumaru as a catalogue source and alternate-title lookup for My Life as a Loser. Its availability is subject to upstream catalogues and licensing. **Do not install a CI/debug APK as an upgrade unless its signer matches the installed APK.** The build script can create a fresh debug key; a fresh key is not the key used for a past published release. The official 0.2.4 release APK is signed with the same certificate as 0.2.3. For custom builds, obtain the original keystore privately (do not commit it) and set `PANELUME_DEBUG_KEYSTORE` to its path for an in-place upgrade.
