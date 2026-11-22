@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.3/Panelume-0.2.3.apk"><strong>Скачать APK 0.2.3</strong></a> ·
+  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.4/Panelume-0.2.4.apk"><strong>Скачать APK 0.2.4</strong></a> ·
   <a href="../README.md">English</a> ·
   <a href="../ROADMAP.md">План развития</a>
 </p>
@@ -21,7 +21,7 @@
 2. Открой **Panelume** и выбери язык. Через **Поиск** найди тайтл, выбери каталог и открой главу.
 3. Чтобы читать без интернета, скачай главу заранее. Свои PDF, CBZ и ZIP можно добавить через **Библиотека → +**.
 
-Если у тебя стоит **Panelume Next 0.2.2**, установи APK поверх него, чтобы сохранить библиотеку и прогресс. У версии 0.2.1 отдельная библиотека.
+Если у тебя стоит **Panelume 0.2.3** или **Panelume Next 0.2.2**, установи APK поверх него, не удаляя приложение, чтобы сохранить библиотеку и прогресс. У версии 0.2.1 отдельная библиотека.
 
 ## Что умеет Panelume
 
