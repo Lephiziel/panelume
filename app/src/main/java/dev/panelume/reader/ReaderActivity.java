@@ -30,6 +30,11 @@ import java.util.concurrent.Executors;
 public final class ReaderActivity extends PanelumeActivity implements ReaderCanvas.Observer {
     private static final String CHAPTER = "chapter";
     private static final String RESTART = "restart";
+    private static final String REQUESTED_AT = "requested_at";
+    private static final String NETWORK_OPEN = "network_open";
+    private long requestedAt;
+    private boolean networkOpen;
+    private boolean timingRecorded;
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService renderer = Executors.newSingleThreadExecutor();
@@ -75,7 +80,12 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     };
 
     static Intent intent(Context context, long chapter, boolean restart) {
-        return new Intent(context, ReaderActivity.class).putExtra(CHAPTER, chapter).putExtra(RESTART, restart);
+        return intent(context, chapter, restart, android.os.SystemClock.elapsedRealtime(), false);
+    }
+
+    static Intent intent(Context context, long chapter, boolean restart, long requestedAt, boolean networkOpen) {
+        return new Intent(context, ReaderActivity.class).putExtra(CHAPTER, chapter).putExtra(RESTART, restart)
+            .putExtra(REQUESTED_AT, requestedAt).putExtra(NETWORK_OPEN, networkOpen);
     }
 
     @Override
@@ -87,6 +97,10 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
             finish();
             return;
         }
+        requestedAt = getIntent().getLongExtra(REQUESTED_AT, android.os.SystemClock.elapsedRealtime());
+        networkOpen = getIntent().getBooleanExtra(NETWORK_OPEN, false);
+        // A recreated reader isn't a new opening sample.
+        timingRecorded = state != null;
         next = db.next(chapter);
         completed = chapter.done;
         if (state != null) chrome = state.getBoolean("chrome", true);
@@ -293,6 +307,11 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
             main.post(this::applyEndVisibility);
         }
         lastPanelRendered = atEnd && allRendered;
+        if (!timingRecorded && anyRendered && resumed && hasWindowFocus()) {
+            timingRecorded = true;
+            OpenMetrics.record(this, networkOpen ? OpenMetrics.NETWORK
+                : chapter.provider.isEmpty() ? OpenMetrics.LOCAL : OpenMetrics.CACHED, requestedAt);
+        }
         if (!opened && anyRendered) {
             db.opened(chapter.id);
             opened = true;

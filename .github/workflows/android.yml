@@ -20,12 +20,17 @@ jobs:
           "$sdkmanager" "platforms;android-35" "build-tools;35.0.0"
       - name: Test zoom tile geometry
         run: bash tools/test-zoom-tiles.sh
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Test catalogue fixtures, queue recovery and progress export
+        run: gradle --no-daemon :app:testDebugUnitTest
       - name: Build and verify APK
         run: ./tools/build-apk.sh
       - name: Upload APK for release signing
         uses: actions/upload-artifact@v4
         with:
-          name: panelume-0.2.6-ci-apk
-          path: out/Panelume-0.2.6.apk
+          name: panelume-0.2.7-ci-apk
+          path: out/Panelume-0.2.7.apk
           if-no-files-found: error
           retention-days: 7
