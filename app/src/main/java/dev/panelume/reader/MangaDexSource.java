@@ -44,7 +44,7 @@ final class MangaDexSource implements CatalogSource {
     public List<Title> search(String query) throws IOException {
         if (query.startsWith("https://")) return Collections.emptyList();
         String endpoint = API + "/manga?limit=30&title=" + Uri.encode(query)
-            + "&originalLanguage%5B%5D=ko&availableTranslatedLanguage%5B%5D=en"
+            + "&availableTranslatedLanguage%5B%5D=en"
             + "&contentRating%5B%5D=safe&contentRating%5B%5D=suggestive&includes%5B%5D=cover_art"
             + "&hasAvailableChapters=true";
         return parseTitles(http.text(endpoint, "application/json", this::apiHost));
@@ -58,7 +58,7 @@ final class MangaDexSource implements CatalogSource {
                 JSONObject row = rows.getJSONObject(i);
                 String id = value(row, "id");
                 JSONObject attrs = row.getJSONObject("attributes");
-                if (!isUuid(id) || !"ko".equals(value(attrs, "originalLanguage"))) continue;
+                if (!isUuid(id)) continue;
                 JSONArray languages = attrs.optJSONArray("availableTranslatedLanguages");
                 if (languages != null && !hasEnglish(languages)) continue;
                 String title = displayTitle(attrs);
@@ -138,11 +138,11 @@ final class MangaDexSource implements CatalogSource {
             JSONObject chapter = result.getJSONObject("chapter");
             String hash = chapter.getString("hash");
             if (!hash.matches("[A-Za-z0-9_-]{8,128}")) throw new Fault(R.string.source_error);
-            JSONArray files = chapter.optJSONArray("dataSaver");
-            String quality = "data-saver";
+            JSONArray files = chapter.optJSONArray("data");
+            String quality = "data";
             if (files == null || files.length() == 0) {
-                files = chapter.getJSONArray("data");
-                quality = "data";
+                files = chapter.getJSONArray("dataSaver");
+                quality = "data-saver";
             }
             List<String> urls = new ArrayList<>();
             for (int i = 0; i < files.length(); i++) {

@@ -95,7 +95,7 @@
     <string name="wait_save">Сохраняем файлы. Подожди немного.</string>
     <string name="opening_chapter">Открываем главу</string>
     <string name="jump_to_start">К началу главы</string>
-    <string name="reader_hint">Коснись страницы, чтобы скрыть панель</string>
+    <string name="reader_hint">Тап — скрыть панель · щипок — масштаб · двойной тап — сброс</string>
     <string name="reader_accessibility">Страницы главы. Коснитесь для управления. Листайте вертикально.</string>
     <string name="page_error">Не удалось отобразить страницу</string>
     <string name="open_error">Не удалось открыть главу</string>

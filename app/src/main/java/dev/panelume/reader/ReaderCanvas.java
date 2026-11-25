@@ -13,6 +13,7 @@ import android.util.LruCache;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.OverScroller;
@@ -43,6 +44,7 @@ final class ReaderCanvas extends View {
     private final Rect target = new Rect();
     private final OverScroller scroller;
     private final GestureDetector gestures;
+    private final ScaleGestureDetector pinch;
     private final LruCache<Long, Bitmap> cache = new LruCache<Long, Bitmap>(CACHE_BYTES) {
         @Override
         protected int sizeOf(Long key, Bitmap value) {
@@ -55,7 +57,10 @@ final class ReaderCanvas extends View {
 
     private int bitmapWidth;
     private int panelWidth;
-    private int margin;
+    private double zoom = 1.0;
+    private double left;
+    private float lastFocusX, lastFocusY;
+    private boolean multiTouch;
     private double scale;
     private double y;
     private double flingOrigin;
@@ -80,12 +85,23 @@ final class ReaderCanvas extends View {
             }
 
             @Override
-            public boolean onSingleTapUp(MotionEvent event) {
+            public boolean onSingleTapConfirmed(MotionEvent event) {
                 return performClick();
             }
 
             @Override
+            public boolean onDoubleTap(MotionEvent event) {
+                if (laidOut) changeZoom(zoom > 1.01 ? 1.0 : 2.5,
+                    event.getX(), event.getY(), event.getX(), event.getY());
+                return true;
+            }
+
+            @Override
             public boolean onScroll(MotionEvent down, MotionEvent move, float dx, float dy) {
+                if (zoom > 1.0) {
+                    left = clampLeft(left - dx);
+                    postInvalidateOnAnimation();
+                }
                 moveTo(y + dy);
                 return true;
             }
@@ -100,6 +116,26 @@ final class ReaderCanvas extends View {
             }
         });
         gestures.setIsLongpressEnabled(false);
+        pinch = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override public boolean onScaleBegin(ScaleGestureDetector detector) {
+                freeze();
+                lastFocusX = detector.getFocusX();
+                lastFocusY = detector.getFocusY();
+                return laidOut;
+            }
+            @Override public boolean onScale(ScaleGestureDetector detector) {
+                float x = detector.getFocusX(), yy = detector.getFocusY();
+                double factor = detector.getScaleFactor();
+                if (Double.isFinite(factor) && factor > 0) {
+                    changeZoom(zoom * factor, lastFocusX, lastFocusY, x, yy);
+                }
+                lastFocusX = x;
+                lastFocusY = yy;
+                return true;
+            }
+        });
+        pinch.setQuickScaleEnabled(false);
+        pinch.setStylusScaleEnabled(false);
         setFocusable(true);
         setClickable(true);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
@@ -113,21 +149,52 @@ final class ReaderCanvas extends View {
         double anchor = laidOut ? anchorAt(y) : initial.page + initial.fraction;
         freeze();
         panelWidth = Math.min(width, Ui.dp(getContext(), 820));
-        margin = (width - panelWidth) / 2;
-        int newWidth = Math.min(panelWidth, 1280);
-        if (newWidth != bitmapWidth) {
-            bitmapWidth = newWidth;
+        if (width != oldWidth) zoom = 1.0;
+        rebuild();
+        left = clampLeft((width - contentWidth()) / 2);
+        y = clamp(positionOf(anchor));
+        laidOut = true;
+    }
+
+    private double contentWidth() { return panelWidth * zoom; }
+
+    private void rebuild() {
+        int wanted = zoom <= 1.25 ? Math.min(panelWidth, 1280)
+            : Math.min(2560, Math.max(panelWidth, panelWidth * 3));
+        if (wanted != bitmapWidth) {
+            bitmapWidth = wanted;
             cache.evictAll();
             failed.clear();
         }
-        scale = (double) panelWidth / bitmapWidth;
+        scale = contentWidth() / bitmapWidth;
         for (int i = 0; i < document.pages.length; i++) {
             starts[i + 1] = starts[i] + scale * document.heightAtWidth(i, bitmapWidth);
         }
-        int page = Math.min(document.pages.length - 1, (int) anchor);
+    }
+
+    private double positionOf(double anchor) {
+        int page = Math.max(0, Math.min(document.pages.length - 1, (int) anchor));
         double fraction = Math.max(0, Math.min(1, anchor - page));
-        y = clamp(starts[page] + (starts[page + 1] - starts[page]) * fraction);
-        laidOut = true;
+        return starts[page] + (starts[page + 1] - starts[page]) * fraction;
+    }
+
+    private double clampLeft(double proposed) {
+        double width = contentWidth();
+        return width <= getWidth() ? (getWidth() - width) / 2
+            : Math.max(getWidth() - width, Math.min(0, proposed));
+    }
+
+    private void changeZoom(double requested, float oldX, float oldY, float x, float yy) {
+        if (!laidOut || released) return;
+        freeze();
+        double anchor = anchorAt(y + oldY);
+        double across = Math.max(0, Math.min(1, (oldX - left) / contentWidth()));
+        zoom = Math.max(1.0, Math.min(4.0, requested));
+        if (zoom < 1.01) zoom = 1.0;
+        rebuild();
+        left = clampLeft(x - across * contentWidth());
+        y = clamp(positionOf(anchor) - yy);
+        postInvalidateOnAnimation();
     }
 
     @Override
@@ -150,7 +217,7 @@ final class ReaderCanvas extends View {
                 long key = key(page, top);
                 // Adjacent tiles share one pixel boundary even at fractional scroll positions.
                 int screenBottom = (int) Math.round(starts[page] + (top + tileHeight) * scale - y);
-                target.set(margin, screenTop, margin + panelWidth, screenBottom);
+                target.set((int) Math.round(left), screenTop, (int) Math.round(left + contentWidth()), screenBottom);
                 Bitmap bitmap = cache.get(key);
                 if (bitmap != null) {
                     canvas.drawBitmap(bitmap, null, target, bitmapPaint);
@@ -163,7 +230,7 @@ final class ReaderCanvas extends View {
                     if (broken) {
                         placeholder.setColor(Ui.ERROR);
                         placeholder.setTextSize(Ui.dp(getContext(), 14));
-                        canvas.drawText(getContext().getString(R.string.page_error), margin + Ui.dp(getContext(), 18),
+                        canvas.drawText(getContext().getString(R.string.page_error), Math.max(0, (int) left) + Ui.dp(getContext(), 18),
                             Math.max(screenTop + Ui.dp(getContext(), 30), Ui.dp(getContext(), 38)), placeholder);
                     } else if (missingPage == -1) {
                         missingPage = page;
@@ -179,8 +246,9 @@ final class ReaderCanvas extends View {
         int percent = Math.min(100, (int) Math.floor(y / maxContentScroll * 100));
         // At the end, leave room below the art for the controls so the last panel remains visible.
         boolean end = storyHeight() <= bottomY - Math.min(Ui.dp(getContext(), 118), footerHeight() * .75);
+        // A cropped viewport is not proof that the entire panel was read.
         observer.viewport((int) anchor, anchor - (int) anchor, percent, anchorAt(bottomY),
-            any, all && any, end);
+            any, all && any && zoom == 1.0, end && zoom == 1.0);
     }
 
     private long key(int page, int top) {
@@ -267,13 +335,30 @@ final class ReaderCanvas extends View {
 
     void restart() {
         freeze();
+        if (laidOut && zoom != 1.0) {
+            zoom = 1.0;
+            rebuild();
+            left = clampLeft(0);
+        }
         moveTo(0);
+        invalidate();
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (released) return false;
-        gestures.onTouchEvent(event);
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) multiTouch = false;
+        if (action == MotionEvent.ACTION_POINTER_DOWN && !multiTouch) {
+            multiTouch = true;
+            MotionEvent cancel = MotionEvent.obtain(event);
+            cancel.setAction(MotionEvent.ACTION_CANCEL);
+            gestures.onTouchEvent(cancel);
+            cancel.recycle();
+        }
+        pinch.onTouchEvent(event);
+        if (!multiTouch) gestures.onTouchEvent(event);
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) multiTouch = false;
         return true;
     }
 
