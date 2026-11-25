@@ -31,8 +31,13 @@ final class ShelfDb extends SQLiteOpenHelper {
     }
 
     private ShelfDb(Context context) {
-        super(context, "panelume.db", null, 2);
-        root = new File(context.getFilesDir(), "chapters");
+        this(context, "panelume.db", new File(context.getFilesDir(), "chapters"));
+    }
+
+    // Explicit storage paths also allow independent database fixtures.
+    ShelfDb(Context context, String databaseName, File chapterRoot) {
+        super(context, databaseName, null, 2);
+        root = chapterRoot;
         setWriteAheadLoggingEnabled(true);
     }
 

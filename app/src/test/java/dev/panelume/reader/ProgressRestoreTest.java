@@ -22,7 +22,8 @@ import static org.junit.Assert.*;
 public final class ProgressRestoreTest {
     @Test public void previewMergeAndRepeatWithoutLoss() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
-        ShelfDb shelf = ShelfDb.get(context);
+        try (TestShelf fixture = new TestShelf(context)) {
+            ShelfDb shelf = fixture.shelf;
         String directory = "22222222-2222-2222-2222-222222222222";
         long series = shelf.addChapter("Restore fixture","1","","test.cbz",directory,"restore-digest","cbz",10);
         ShelfDb.Chapter chapter = shelf.chapters(series).get(0);
@@ -62,6 +63,7 @@ public final class ProgressRestoreTest {
         // Missing content must never produce phantom library entries.
         assertTrue(chapter.file(shelf.root).delete());
         assertEquals(1,ProgressRestore.preview(shelf,backup).skipped);
+        }
     }
 
     @Test public void invalidOrUnsupportedBackupRejected() throws Exception {
