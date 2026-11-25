@@ -1,0 +1,61 @@
+name: Publish Panelume 0.2.5 APK
+on:
+  push:
+    branches:
+      - release/panelume-0.2.5
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: panelume-0.2.5-ci-apk
+          path: out
+          github-token: ${{ github.token }}
+          run-id: 45530422501
+      - name: Reconstruct locally signed APK and verify checksum
+        run: |
+          set -euo pipefail
+          echo "ab24c36857b9238c770e7caea23c63074c5343faab8b246068cfa57f6714f4ce  out/Panelume-0.2.5.apk" | sha256sum -c
+          python3 - <<'PY'
+          import base64, zlib
+          from pathlib import Path
+          encoded = Path(".github/release/0.2.5-signature.patch.zlib.b64").read_text().strip()
+          Path("/tmp/panelume-025.patch").write_bytes(zlib.decompress(base64.b64decode(encoded)))
+          PY
+          cp out/Panelume-0.2.5.apk app.apk
+          git apply --binary /tmp/panelume-025.patch
+          echo "c31b29aeccf45da955c3b92dad7628798b844f6e907701c46f949cc3d3690cb1  app.apk" | sha256sum -c
+          mv -f app.apk out/Panelume-0.2.5.apk
+      - name: Verify certificate and Android package identity
+        run: |
+          set -euo pipefail
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          if [[ ! -x "$tools/apksigner" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"
+          fi
+          "$tools/apksigner" verify --verbose --print-certs out/Panelume-0.2.5.apk | tee /tmp/apksigner-check.txt
+          grep -F "Signer #1 certificate SHA-256 digest: e71850cc090b48c0f70c9af1aeb0f8a123c128b423aa008fd46861337f1cfec9" /tmp/apksigner-check.txt
+          "$tools/aapt2" dump badging out/Panelume-0.2.5.apk | tee /tmp/panelume-badging.txt
+          grep -E "^package: name='dev.panelume.reader.next' versionCode='7' versionName='0.2.5'" /tmp/panelume-badging.txt
+      - name: Publish verified release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.2.5 --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release v0.2.5 already exists; refusing to overwrite."
+            exit 1
+          fi
+          gh release create v0.2.5 out/Panelume-0.2.5.apk \
+            --repo "${{ github.repository }}" \
+            --target 5b5c5c49e58473ada258ea70357990f4c4734321 \
+            --title "Panelume 0.2.5" \
+            --notes "Pinch-to-zoom (1–4×), double-tap zoom/reset, panning, higher-resolution tiles, expanded MangaDex language coverage, Internet Archive Comics, Pepper & Carrot and xkcd. Same Android package and signing certificate as 0.2.4; install over the existing app without uninstalling. Local data format is unchanged. Device gesture tests and complete chapter availability are not verified. APK SHA-256: c31b29aeccf45da955c3b92dad7628798b844f6e907701c46f949cc3d3690cb1."
