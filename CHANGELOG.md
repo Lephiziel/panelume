@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5
+
+- Added pinch-to-zoom from 1× to 4×, double-tap zoom/reset and horizontal panning.
+- Increased tile resolution while zoomed and preferred original-quality MangaDex pages for new downloads.
+- Expanded MangaDex discovery to all original languages with English chapters.
+- Added Internet Archive Comics, Pepper & Carrot and xkcd catalogues.
+- Retained the Android application ID, original signing certificate, database schema and chapter storage format.
+
 ## 0.2.4
 
 - Added Atsumaru as an additional English comic catalogue using its public JSON API.
