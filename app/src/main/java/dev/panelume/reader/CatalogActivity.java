@@ -37,6 +37,10 @@ public final class CatalogActivity extends PanelumeActivity {
     private CatalogSource source;
     private Rows rows;
     private TextView progress;
+    private TextView readNow;
+    private TextView openingStatus;
+    private TextView openingAction;
+    private TextView openingCancel;
     private TextView download;
     private TextView notice;
     private TextView cancel;
@@ -128,8 +132,28 @@ public final class CatalogActivity extends PanelumeActivity {
             Ui.add(page, synopsis, Ui.FILL, Ui.WRAP);
         }
         Ui.gap(page, 17);
-        download = Ui.button(this, getString(R.string.download_all), true, this::downloadAll);
+        readNow = Ui.button(this, getString(R.string.start_reading), true, () -> {
+            CatalogSource.Episode episode = firstToRead();
+            if (episode != null) open(episode);
+        });
+        Ui.add(page, readNow, Ui.FILL, Ui.WRAP);
+        Ui.gap(page, 8);
+        download = Ui.button(this, getString(R.string.download_all), false, this::downloadAll);
         Ui.add(page, download, Ui.FILL, Ui.WRAP);
+        openingStatus = Ui.label(this, "", 14, Ui.MUTED);
+        Ui.add(page, openingStatus, Ui.FILL, Ui.WRAP);
+        openingAction = Ui.button(this, getString(R.string.retry_download), false, () -> {
+            CatalogSource.Episode episode = awaitingEpisode();
+            if (episode != null) open(episode);
+        });
+        Ui.add(page, openingAction, Ui.FILL, Ui.WRAP);
+        openingCancel = Ui.button(this, getString(R.string.cancel_download), false, () -> {
+            CatalogQueue.Job job = jobs.get(awaiting);
+            if (job != null && job.state != CatalogQueue.FAILED) queue.cancel(job.id);
+            awaiting = "";
+            refresh(true);
+        });
+        Ui.add(page, openingCancel, Ui.FILL, Ui.WRAP);
         Ui.gap(page, 8);
         progress = Ui.label(this, "", 12, Ui.MUTED);
         Ui.add(page, progress, Ui.FILL, Ui.WRAP);
@@ -215,14 +239,58 @@ public final class CatalogActivity extends PanelumeActivity {
             CatalogQueue.Job job = jobs.get(awaiting);
             if (chapter != null) {
                 awaiting = "";
+                updateHeader();
                 startActivity(ReaderActivity.intent(this, chapter.id, false));
-            } else if (job == null || job.state == CatalogQueue.FAILED) {
+            } else if (job == null && !loading) {
                 awaiting = "";
+                updateHeader();
             }
         }
     }
 
+    private CatalogSource.Episode awaitingEpisode() {
+        for (CatalogSource.Episode episode : episodes) if (episode.id.equals(awaiting)) return episode;
+        CatalogQueue.Job job = jobs.get(awaiting);
+        return job == null ? null : job.episode;
+    }
+
+    private CatalogSource.Episode firstToRead() {
+        CatalogSource.Episode first = null;
+        CatalogSource.Episode resumed = null;
+        long latest = 0;
+        for (CatalogSource.Episode episode : episodes) {
+            ShelfDb.Chapter stored = saved.get(episode.id);
+            if (stored != null && !stored.done && stored.opened > latest) {
+                latest = stored.opened;
+                resumed = episode;
+            }
+            if (first == null && (stored == null || !stored.done)) first = episode;
+        }
+        return resumed != null ? resumed : first != null ? first : episodes.isEmpty() ? null : episodes.get(0);
+    }
+
     private void updateHeader() {
+        CatalogSource.Episode first = firstToRead();
+        boolean busy = !awaiting.isEmpty() && jobs.containsKey(awaiting);
+        readNow.setVisibility(first != null && !busy ? View.VISIBLE : View.GONE);
+        if (first != null) {
+            ShelfDb.Chapter stored = saved.get(first.id);
+            readNow.setText(stored != null && stored.opened > 0 && !stored.done
+                ? getString(R.string.resume) : getString(R.string.open_selected_chapter, label(this, first)));
+        }
+        CatalogQueue.Job opening = jobs.get(awaiting);
+        boolean activeOpening = opening != null;
+        boolean failedOpening = activeOpening && opening.state == CatalogQueue.FAILED;
+        openingStatus.setVisibility(activeOpening ? View.VISIBLE : View.GONE);
+        openingAction.setVisibility(failedOpening ? View.VISIBLE : View.GONE);
+        openingCancel.setVisibility(activeOpening ? View.VISIBLE : View.GONE);
+        if (activeOpening) {
+            openingStatus.setText(getString(R.string.opening_status, label(this, opening.episode),
+                DownloadStatus.label(this, opening)));
+            openingAction.setText(CatalogQueue.ACCESS.equals(opening.error)
+                ? getString(R.string.external_open, source.name()) : getString(R.string.retry_download));
+            openingCancel.setText(failedOpening ? R.string.cancel : R.string.cancel_download);
+        }
         int eligible = 0;
         int count = 0;
         int queued = 0;
@@ -266,7 +334,9 @@ public final class CatalogActivity extends PanelumeActivity {
         }
         CatalogQueue.Job job = jobs.get(episode.id);
         if (episode.external || (job != null && CatalogQueue.ACCESS.equals(job.error))) {
+            awaiting = "";
             external(this, source, episode.url);
+            refresh(true);
             return;
         }
         awaiting = episode.id;
