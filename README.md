@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.4/Panelume-0.2.4.apk"><img src="https://img.shields.io/badge/Download_APK-0.2.4-F7AE72?style=for-the-badge&logo=android&logoColor=20211F" alt="Download Panelume 0.2.4 APK"></a>
+  <a href="https://github.com/Lephiziel/panelume/releases/download/v0.2.5/Panelume-0.2.5.apk"><img src="https://img.shields.io/badge/Download_APK-0.2.5-F7AE72?style=for-the-badge&logo=android&logoColor=20211F" alt="Download Panelume 0.2.5 APK"></a>
 </p>
 
 <p align="center">
@@ -26,11 +26,11 @@
 
 ## Install Panelume
 
-1. On your phone, tap **Download APK** above or open the [release page](https://github.com/Lephiziel/panelume/releases/tag/v0.2.4) and select `Panelume-0.2.4.apk` under **Assets**.
+1. On your phone, tap **Download APK** above or open the [release page](https://github.com/Lephiziel/panelume/releases/tag/v0.2.5) and select `Panelume-0.2.5.apk` under **Assets**.
 2. Open the downloaded file and follow Android’s installation prompt. If Android asks, allow your browser or file manager to install apps.
 3. Open **Panelume**, search for a title and choose a source. Tap a chapter to start reading.
 
-**Already using Panelume 0.2.3 or Panelume Next 0.2.2?** Install this APK over it without uninstalling to keep your library and reading progress. Panelume 0.2.1 has a separate library.
+**Already using Panelume 0.2.4, 0.2.3 or Panelume Next 0.2.2?** Install this APK over it without uninstalling to keep your library and reading progress. Panelume 0.2.1 has a separate library.
 
 ## What you can read
 
@@ -47,6 +47,7 @@ Read **manhwa, manga, manhua, webtoons and other comics**. Search the available 
 | Feature | What you get |
 | :-- | :-- |
 | **Continuous scroll** | Panels join into a single vertical strip. Tap the page to hide the controls. |
+| **Zoom and pan** | Pinch to magnify up to 4×; double-tap to zoom or reset. Drag across magnified panels. |
 | **Pick up where you left off** | Chapter bookmarks remember the page and offset. The home screen puts your latest chapter one tap away. |
 | **Take a series offline** | Save individual chapters or queue a series. See progress, retry failed downloads or cancel from Downloads. Series posters stay visible offline once loaded. |
 | **Bring your own files** | Open PDF, CBZ or ZIP image archives from your device or a direct HTTPS link. |
@@ -59,12 +60,15 @@ Read **manhwa, manga, manhua, webtoons and other comics**. Search the available 
 | **WEBTOON** | English catalogue and publicly readable episodes. Episodes that require unlocking open at the source. |
 | **Weeb Central** | English catalogue and public chapter lists. |
 | **MangaRead** | English catalogue and public chapter images. |
-| **MangaDex** | Korean series with English chapters, with source and translation-group credits. |
+| **MangaDex** | Manga, manhwa, manhua and other series with English chapters, with translation-group credits. |
 | **Atsumaru** | Additional English-language comic catalogue, public chapter lists and pages via JSON API. |
+| **Internet Archive Comics** | Public-domain and openly licensed comics. |
+| **Pepper & Carrot** | Openly licensed fantasy webcomic by David Revoy. |
+| **xkcd** | Free English-language webcomic archive. |
 
 Try **Viral Hit** or **How to Fight** to compare listings across sources. Search also recognizes **My Life as a Loser**, **Loser Life**, **Loser's Life**, and **Life Completely Ruined** and shows its official WEBTOON listing without relying on live catalogue search. You can paste a direct Weeb Central series URL into the search field as a fallback. Chapter availability depends on the source; WEBTOON's Daily Pass episodes must be unlocked on WEBTOON.
 
-**Keep your reading progress when updating:** install the newer APK **over** Panelume Next 0.2.3, without uninstalling or clearing its data. The APK must use the same Android application ID and compatible signing key as the installed version. The series database, chapter bookmarks, offline files and reading statistics remain in the existing app data; this change introduces no database migration. A differently signed APK cannot be installed as an in-place update.
+**Keep your reading progress when updating:** install the newer APK **over** your existing compatible Panelume installation, without uninstalling or clearing its data. The APK must use the same Android application ID and compatible signing key as the installed version. The series database, chapter bookmarks, offline files and reading statistics remain in the existing app data; this change introduces no database migration. A differently signed APK cannot be installed as an in-place update.
 
 ## Feedback and contributions
 
@@ -89,7 +93,7 @@ For a standalone Linux build, also install Android Build Tools 35.0.0 and `zip`,
 
 ```sh
 ./tools/build-apk.sh
-adb install -r out/Panelume-0.2.3.apk
+adb install -r out/Panelume-0.2.5.apk
 ```
 
 To update an existing installation, sign with its original key. The standalone script accepts a keystore path through `PANELUME_DEBUG_KEYSTORE`.
