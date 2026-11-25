@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.6
+
+- Keep base image tiles stable while pinching and double-tapping; zoom no longer clears the displayed tile cache.
+- Decode higher-resolution detail tiles after the gesture, using a separate bounded cache and retaining base images as a fallback.
+- Keep the existing database, bookmark format, source IDs and Android package ID unchanged.
+- Add tile-geometry regression checks; real-device gesture and upgrade checks are still required.
+
 ## 0.2.5
 
 - Added pinch-to-zoom from 1× to 4×, double-tap zoom/reset and horizontal panning.

@@ -26,8 +26,9 @@ import java.util.concurrent.ExecutorService;
 
 final class ReaderCanvas extends View {
     static final int INK = 0xff121310;
-    private static final int TILE_HEIGHT = 640;
-    private static final int CACHE_BYTES = 36 * 1024 * 1024;
+    private static final int TILE_HEIGHT = 320;
+    private static final int CACHE_BYTES = 24 * 1024 * 1024;
+    private static final int DETAIL_BYTES = 32 * 1024 * 1024;
 
     interface Observer {
         void viewport(int page, double fraction, int percent, double bottom,
@@ -51,7 +52,11 @@ final class ReaderCanvas extends View {
             return value.getAllocationByteCount();
         }
     };
+    private final LruCache<Long, Bitmap> detailCache = new LruCache<Long, Bitmap>(DETAIL_BYTES) {
+        @Override protected int sizeOf(Long key, Bitmap value) { return value.getAllocationByteCount(); }
+    };
     private final Set<Long> failed = new HashSet<>();
+    private final Set<Long> detailFailed = new HashSet<>();
     private final double[] starts;
     private final Bookmark.Position initial;
 
@@ -159,12 +164,14 @@ final class ReaderCanvas extends View {
     private double contentWidth() { return panelWidth * zoom; }
 
     private void rebuild() {
-        int wanted = zoom <= 1.25 ? Math.min(panelWidth, 1280)
-            : Math.min(2560, Math.max(panelWidth, panelWidth * 3));
+        // The base tile grid is independent of zoom. A gesture must never evict visible art.
+        int wanted = Math.min(panelWidth, 1280);
         if (wanted != bitmapWidth) {
             bitmapWidth = wanted;
             cache.evictAll();
+            detailCache.evictAll();
             failed.clear();
+            detailFailed.clear();
         }
         scale = contentWidth() / bitmapWidth;
         for (int i = 0; i < document.pages.length; i++) {
@@ -206,6 +213,10 @@ final class ReaderCanvas extends View {
         boolean all = true;
         int missingPage = -1;
         int missingTile = 0;
+        int detailPage = -1;
+        int detailTile = 0;
+        long visibleDetailBytes = 0;
+        boolean wantDetail = zoom >= 1.5;
 
         for (int page = first; page < document.pages.length && starts[page] < bottomY; page++) {
             int height = document.heightAtWidth(page, bitmapWidth);
@@ -219,9 +230,22 @@ final class ReaderCanvas extends View {
                 int screenBottom = (int) Math.round(starts[page] + (top + tileHeight) * scale - y);
                 target.set((int) Math.round(left), screenTop, (int) Math.round(left + contentWidth()), screenBottom);
                 Bitmap bitmap = cache.get(key);
-                if (bitmap != null) {
-                    canvas.drawBitmap(bitmap, null, target, bitmapPaint);
+                Bitmap detail = wantDetail ? detailCache.get(key) : null;
+                if (wantDetail) {
+                    visibleDetailBytes += (long) detailWidth() * detailHeight(page, top, tileHeight) * 4;
+                    if (detail == null && !detailFailed.contains(key) && detailPage == -1) {
+                        detailPage = page;
+                        detailTile = top;
+                    }
+                }
+                if (bitmap != null || detail != null) {
+                    canvas.drawBitmap(detail != null ? detail : bitmap, null, target, bitmapPaint);
                     any = true;
+                    // Keep the base tile available even if the detail tile arrived earlier.
+                    if (bitmap == null && !failed.contains(key) && missingPage == -1) {
+                        missingPage = page;
+                        missingTile = top;
+                    }
                 } else {
                     all = false;
                     boolean broken = failed.contains(key);
@@ -239,7 +263,11 @@ final class ReaderCanvas extends View {
                 }
             }
         }
-        if (missingPage != -1) queue(missingPage, missingTile);
+        if (missingPage != -1) queue(missingPage, missingTile, false);
+        // First render cached base art during the gesture. Upgrade visible tiles only after
+        // fingers lift; never chase a detail working set bigger than the detail cache.
+        else if (wantDetail && !multiTouch && detailPage != -1
+            && visibleDetailBytes <= DETAIL_BYTES) queue(detailPage, detailTile, true);
 
         double anchor = anchorAt(y);
         double maxContentScroll = Math.max(1, storyHeight() - getHeight());
@@ -255,25 +283,44 @@ final class ReaderCanvas extends View {
         return ((long) page << 32) | (top & 0xffffffffL);
     }
 
-    private void queue(int page, int top) {
+    private int detailWidth() { return Math.min(2560, bitmapWidth * 2); }
+
+    private int detailBoundary(int page, int baseRow) {
+        return ZoomTiles.boundary(baseRow, document.heightAtWidth(page, bitmapWidth),
+            document.heightAtWidth(page, detailWidth()));
+    }
+
+    private int detailHeight(int page, int top, int height) {
+        return detailBoundary(page, top + height) - detailBoundary(page, top);
+    }
+
+    private void queue(int page, int top, boolean detail) {
         if (tilePending || released) return;
-        int width = bitmapWidth;
-        int height = Math.min(TILE_HEIGHT, document.heightAtWidth(page, width) - top);
-        long key = key(page, top);
+        final int baseWidth = bitmapWidth;
+        final int baseHeight = Math.min(TILE_HEIGHT, document.heightAtWidth(page, baseWidth) - top);
+        final int width = detail ? detailWidth() : baseWidth;
+        final int renderTop = detail ? detailBoundary(page, top) : top;
+        final int height = detail ? detailHeight(page, top, baseHeight) : baseHeight;
+        final long key = key(page, top);
         tilePending = true;
         worker.execute(() -> {
             Bitmap bitmap = null;
             try {
-                bitmap = document.tile(page, width, top, height);
+                bitmap = document.tile(page, width, renderTop, height);
             } catch (IOException | RuntimeException e) {
                 Log.w("PanelumeReader", "Tile unavailable at page " + (page + 1), e);
             }
             Bitmap result = bitmap;
             main.post(() -> {
                 tilePending = false;
-                if (!released && width == bitmapWidth) {
-                    if (result == null) failed.add(key);
-                    else cache.put(key, result);
+                if (!released && baseWidth == bitmapWidth) {
+                    if (detail) {
+                        if (result == null) detailFailed.add(key);
+                        else detailCache.put(key, result);
+                    } else {
+                        if (result == null) failed.add(key);
+                        else cache.put(key, result);
+                    }
                 } else if (result != null) {
                     result.recycle();
                 }
@@ -358,7 +405,11 @@ final class ReaderCanvas extends View {
         }
         pinch.onTouchEvent(event);
         if (!multiTouch) gestures.onTouchEvent(event);
-        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) multiTouch = false;
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            multiTouch = false;
+            // Start detail decoding even when the final pinch event did not change zoom.
+            postInvalidateOnAnimation();
+        }
         return true;
     }
 
@@ -415,6 +466,7 @@ final class ReaderCanvas extends View {
         released = true;
         freeze();
         cache.evictAll();
+        detailCache.evictAll();
         worker.execute(() -> {
             try {
                 document.close();

@@ -18,12 +18,14 @@ jobs:
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           (set +o pipefail; yes | "$sdkmanager" --licenses >/dev/null)
           "$sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Test zoom tile geometry
+        run: bash tools/test-zoom-tiles.sh
       - name: Build and verify APK
         run: ./tools/build-apk.sh
       - name: Upload APK for release signing
         uses: actions/upload-artifact@v4
         with:
-          name: panelume-0.2.5-ci-apk
-          path: out/Panelume-0.2.5.apk
+          name: panelume-0.2.6-ci-apk
+          path: out/Panelume-0.2.6.apk
           if-no-files-found: error
           retention-days: 7
