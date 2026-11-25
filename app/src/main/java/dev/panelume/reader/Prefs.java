@@ -42,6 +42,14 @@ final class Prefs {
         values(context).edit().putBoolean("setup_finished", true).apply();
     }
 
+    static String lastSearch(Context context) {
+        return values(context).getString("last_search", "");
+    }
+
+    static void lastSearch(Context context, String query) {
+        values(context).edit().putString("last_search", query).apply();
+    }
+
     static boolean unmetered(Context context) {
         return values(context).getBoolean("unmetered", true);
     }

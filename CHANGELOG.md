@@ -5,7 +5,10 @@
 - Keep base image tiles stable while pinching and double-tapping; zoom no longer clears the displayed tile cache.
 - Decode higher-resolution detail tiles after the gesture, using a separate bounded cache and retaining base images as a fallback.
 - Keep the existing database, bookmark format, source IDs and Android package ID unchanged.
-- Add tile-geometry regression checks; real-device gesture and upgrade checks are still required.
+- Add tile-geometry and search-alias regression checks; real-device gesture and upgrade checks are still required.
+- Empty library offers Find a title and Open a file; the last search is restored after restarting.
+- Search shows completed source count and partial failures, with targeted retries and alternate-title fallback.
+- Series pages offer direct chapter opening and visible preparation, retry and cancellation controls.
 
 ## 0.2.5
 

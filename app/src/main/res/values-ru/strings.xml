@@ -184,4 +184,11 @@
         <item quantity="other">%d главы</item>
     </plurals>
     <string name="cancel_remaining">Отменить оставшиеся загрузки</string>
+    <string name="find_title">Найти тайтл</string>
+    <string name="open_file">Открыть файл</string>
+    <string name="search_source_progress">Проверено %1$d из %2$d источников</string>
+    <string name="source_issues">Не ответили: %1$d · причины / повтор</string>
+    <string name="source_issues_title">Ошибки источников</string>
+    <string name="open_selected_chapter">Открыть: %1$s</string>
+    <string name="opening_status">%1$s · %2$s</string>
 </resources>

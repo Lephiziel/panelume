@@ -53,12 +53,13 @@ public final class MainActivity extends PanelumeActivity {
         Ui.edgeWindow(this, Ui.BG);
         db = ShelfDb.get(this);
         queue = new CatalogQueue(db);
+        onlineQuery = Prefs.lastSearch(this);
         if (state != null) {
             tab = state.getInt("tab", HOME);
             seriesId = state.getLong("series", -1);
             filter = state.getInt("filter", 0);
             search = state.getString("search", "");
-            onlineQuery = state.getString("online", "");
+            onlineQuery = state.getString("online", onlineQuery);
         }
         Thread cleanup = new Thread(() -> ImportFiles.cleanup(getApplicationContext(), db), "panelume-cleanup");
         cleanup.start();
@@ -217,7 +218,7 @@ public final class MainActivity extends PanelumeActivity {
         Ui.add(row, new Ui.StripArt(this), 99, 94);
         Ui.add(content, row, Ui.FILL, Ui.WRAP);
         Ui.gap(content, 16);
-        Ui.add(content, Ui.button(this, getString(empty ? R.string.search : R.string.open_library), true,
+        Ui.add(content, Ui.button(this, getString(empty ? R.string.find_title : R.string.open_library), true,
             () -> showTab(empty ? SEARCH : LIBRARY)), Ui.FILL, Ui.WRAP);
         Ui.gap(content, 8);
         Ui.add(content, Ui.button(this, getString(R.string.import_chapters), false, () -> importFiles("")),
@@ -307,7 +308,9 @@ public final class MainActivity extends PanelumeActivity {
         if (series.isEmpty()) {
             Ui.add(page, emptyCard("shelf", getString(R.string.empty_library),
                 getString(R.string.empty_library_detail),
-                getString(R.string.import_chapters), () -> importFiles("")), Ui.FILL, Ui.WRAP);
+                getString(R.string.find_title), () -> showTab(SEARCH)), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 9);
+            Ui.add(page, Ui.button(this, getString(R.string.open_file), false, () -> importFiles("")), Ui.FILL, Ui.WRAP);
             return Ui.scroller(this, page);
         }
 

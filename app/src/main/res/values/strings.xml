@@ -182,4 +182,11 @@
         <item quantity="other">%d chapters</item>
     </plurals>
     <string name="cancel_remaining">Cancel remaining downloads</string>
+    <string name="find_title">Find a title</string>
+    <string name="open_file">Open a file</string>
+    <string name="search_source_progress">%1$d/%2$d sources checked</string>
+    <string name="source_issues">%1$d sources unavailable · details / retry</string>
+    <string name="source_issues_title">Source errors</string>
+    <string name="open_selected_chapter">Open %1$s</string>
+    <string name="opening_status">%1$s · %2$s</string>
 </resources>

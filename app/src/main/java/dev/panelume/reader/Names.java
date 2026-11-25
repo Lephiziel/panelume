@@ -51,8 +51,19 @@ final class Names {
     static boolean isMyLifeAsALoser(String title) {
         String key = key(title);
         return key.equals("my life as a loser") || key.equals("loser life")
-            || key.equals("losers life") || key.equals("life completely ruined")
+            || key.equals("losers life") || key.equals("loser s life") || key.equals("life completely ruined")
             || key.equals("insaeng jonmang") || key.equals("inseng jon mang");
+    }
+
+    static String[] searchAliases(String title) {
+        String normalized = key(title);
+        String[] options;
+        if (isViralHit(title)) options = new String[]{"Viral Hit", "How to Fight"};
+        else if (isMyLifeAsALoser(title)) options = new String[]{"My Life as a Loser", "Loser Life", "Life Completely Ruined"};
+        else return new String[0];
+        java.util.List<String> result = new java.util.ArrayList<>();
+        for (String option : options) if (!key(option).equals(normalized)) result.add(option);
+        return result.toArray(new String[0]);
     }
 
     static String normalizeNumber(String value) {

@@ -1,5 +1,6 @@
 package dev.panelume.reader;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -48,6 +49,7 @@ final class CatalogSearch extends LinearLayout {
     private final FrameLayout body;
     private final LinearLayout notices;
     private final TextView status;
+    private final TextView sourceIssues;
     private final ListView list;
     private final Results adapter;
     private String filter = "";
@@ -96,6 +98,10 @@ final class CatalogSearch extends LinearLayout {
         Ui.gap(heading, 10);
         status = Ui.label(activity, "", 12, Ui.MUTED);
         Ui.add(heading, status, Ui.FILL, Ui.WRAP);
+        sourceIssues = Ui.strong(activity, "", 12, Ui.ACCENT);
+        Ui.pad(sourceIssues, 0, 7, 0, 7);
+        sourceIssues.setOnClickListener(v -> showIssues());
+        Ui.add(heading, sourceIssues, Ui.FILL, Ui.WRAP);
         Ui.gap(heading, 6);
         addView(heading, new LayoutParams(Ui.FILL, Ui.WRAP));
 
@@ -133,7 +139,9 @@ final class CatalogSearch extends LinearLayout {
                 results.clear();
                 failures.clear();
                 render();
-                if (query().trim().length() >= 2) main.postDelayed(debounced, 520);
+                String term = query().trim();
+                if (term.isEmpty()) Prefs.lastSearch(activity, "");
+                if (term.length() >= 2) main.postDelayed(debounced, 520);
             }
             @Override public void afterTextChanged(Editable editable) {}
         });
@@ -171,39 +179,75 @@ final class CatalogSearch extends LinearLayout {
         main.removeCallbacks(debounced);
         if (explicit) hideKeyboard();
         String term = query().trim();
-        if (term.length() < 2 || (term.equals(lastQuery) && (isSearching() || (!explicit && failures.isEmpty())))) return;
+        if (term.length() < 2) return;
+        if (term.equals(lastQuery)) {
+            if (explicit && !failures.isEmpty()) retryFailures();
+            return;
+        }
         cancel();
-        int version = revision;
         lastQuery = term;
+        Prefs.lastSearch(activity, term);
         results.clear();
         failures.clear();
-        for (CatalogSource source : CatalogSource.SOURCES) {
-            CatalogSource.Title known = source.knownTitle(term);
-            if (known != null) {
-                results.put(source.id(), Collections.singletonList(known));
-                continue;
-            }
-            pending.add(source.id());
-            tasks.add(worker.submit(() -> {
-                List<CatalogSource.Title> hits = null;
-                String problem = null;
-                try {
-                    hits = source.search(term);
-                } catch (IOException | RuntimeException e) {
-                    problem = Fault.describe(activity, e, R.string.source_error);
+        for (CatalogSource source : CatalogSource.SOURCES) launch(source, term);
+        render();
+    }
+
+    private void launch(CatalogSource source, String term) {
+        CatalogSource.Title known = source.knownTitle(term);
+        if (known != null) {
+            results.put(source.id(), Collections.singletonList(known));
+            return;
+        }
+        int version = revision;
+        pending.add(source.id());
+        tasks.add(worker.submit(() -> {
+            List<CatalogSource.Title> hits = null;
+            String problem = null;
+            try {
+                hits = source.search(term);
+                for (String alias : Names.searchAliases(term)) {
+                    if (!hits.isEmpty() || Thread.currentThread().isInterrupted()) break;
+                    hits = source.search(alias);
                 }
-                List<CatalogSource.Title> found = hits;
-                String message = problem;
-                main.post(() -> {
-                    if (closed || version != revision) return;
-                    pending.remove(source.id());
-                    if (message != null) failures.put(source.id(), message);
-                    else results.put(source.id(), found);
-                    render();
-                });
-            }));
+            } catch (IOException | RuntimeException e) {
+                problem = Fault.describe(activity, e, R.string.source_error);
+            }
+            List<CatalogSource.Title> found = hits;
+            String message = problem;
+            main.post(() -> {
+                if (closed || version != revision) return;
+                pending.remove(source.id());
+                if (message != null) failures.put(source.id(), message);
+                else results.put(source.id(), found);
+                render();
+            });
+        }));
+    }
+
+    private void retryFailures() {
+        if (closed || !query().trim().equals(lastQuery)) return;
+        for (CatalogSource source : CatalogSource.SOURCES) {
+            if (!failures.containsKey(source.id()) || pending.contains(source.id())) continue;
+            failures.remove(source.id());
+            launch(source, lastQuery);
         }
         render();
+    }
+
+    private void showIssues() {
+        if (closed || failures.isEmpty()) return;
+        StringBuilder details = new StringBuilder();
+        for (Map.Entry<String, String> failure : failures.entrySet()) {
+            if (details.length() > 0) details.append("\n\n");
+            details.append(CatalogSource.label(failure.getKey())).append(" — ").append(failure.getValue());
+        }
+        new AlertDialog.Builder(activity)
+            .setTitle(R.string.source_issues_title)
+            .setMessage(details.toString())
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.retry, (dialog, which) -> retryFailures())
+            .show();
     }
 
     private boolean isSearching() {
@@ -219,8 +263,15 @@ final class CatalogSearch extends LinearLayout {
         }
         String notice = !visible.isEmpty() ? activity.getString(R.string.results_count, visible.size())
             : isSearching() ? activity.getString(R.string.searching) : "";
+        if (!lastQuery.isEmpty() && !pending.isEmpty()) {
+            String progress = activity.getString(R.string.search_source_progress,
+                CatalogSource.SOURCES.size() - pending.size(), CatalogSource.SOURCES.size());
+            notice = notice.isEmpty() ? progress : notice + " · " + progress;
+        }
         status.setText(notice);
         status.setVisibility(notice.isEmpty() ? GONE : VISIBLE);
+        sourceIssues.setText(activity.getString(R.string.source_issues, failures.size()));
+        sourceIssues.setVisibility(failures.isEmpty() ? GONE : VISIBLE);
         adapter.notifyDataSetChanged();
         list.setVisibility(visible.isEmpty() ? GONE : VISIBLE);
         ((View) notices.getParent()).setVisibility(visible.isEmpty() ? VISIBLE : GONE);
@@ -252,7 +303,7 @@ final class CatalogSearch extends LinearLayout {
                     CatalogSource.label(failure.getKey()), failure.getValue()), 14, Ui.MUTED), Ui.FILL, Ui.WRAP);
                 Ui.gap(notices, 8);
             }
-            Ui.add(notices, Ui.button(activity, activity.getString(R.string.retry), false, () -> fetch(true)),
+            Ui.add(notices, Ui.button(activity, activity.getString(R.string.retry), false, this::retryFailures),
                 Ui.FILL, Ui.WRAP);
         }
     }
