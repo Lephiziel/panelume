@@ -46,6 +46,7 @@ public final class CatalogActivity extends PanelumeActivity {
     private TextView cancel;
     private TextView retry;
     private String awaiting = "";
+    private long awaitingSince;
     private String stateKey = "";
     private long localId;
     private boolean loading;
@@ -73,7 +74,10 @@ public final class CatalogActivity extends PanelumeActivity {
         shelf = ShelfDb.get(this);
         queue = new CatalogQueue(shelf);
         localId = queue.seriesId(title);
-        if (state != null) awaiting = state.getString("awaiting", "");
+        if (state != null) {
+            awaiting = state.getString("awaiting", "");
+            awaitingSince = state.getLong("awaiting_since", 0L);
+        }
         build();
         load();
     }
@@ -240,7 +244,7 @@ public final class CatalogActivity extends PanelumeActivity {
             if (chapter != null) {
                 awaiting = "";
                 updateHeader();
-                startActivity(ReaderActivity.intent(this, chapter.id, false));
+                startActivity(ReaderActivity.intent(this, chapter.id, false, awaitingSince, true));
             } else if (job == null && !loading) {
                 awaiting = "";
                 updateHeader();
@@ -340,6 +344,7 @@ public final class CatalogActivity extends PanelumeActivity {
             return;
         }
         awaiting = episode.id;
+        awaitingSince = android.os.SystemClock.elapsedRealtime();
         localId = queue.enqueue(title, Collections.singletonList(episode), false);
         DownloadService.begin(this, false);
         refresh(true);
@@ -389,6 +394,7 @@ public final class CatalogActivity extends PanelumeActivity {
     @Override protected void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putString("awaiting", awaiting);
+        state.putLong("awaiting_since", awaitingSince);
     }
 
     private final class Rows extends BaseAdapter {

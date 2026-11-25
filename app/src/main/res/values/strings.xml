@@ -189,4 +189,17 @@
     <string name="source_issues_title">Source errors</string>
     <string name="open_selected_chapter">Open %1$s</string>
     <string name="opening_status">%1$s · %2$s</string>
+    <string name="progress_export_title">Reading progress</string>
+    <string name="progress_export_detail">Save a JSON snapshot of your library, bookmarks, reading time and settings. Chapter files are not included. Import and restoration are not available yet. Keep the export private.</string>
+    <string name="progress_export">Export progress</string>
+    <string name="progress_export_working">Exporting progress…</string>
+    <string name="progress_export_success">Progress exported</string>
+    <string name="progress_export_failed">Export failed. Your library is unchanged. Do not use the incomplete export.</string>
+    <string name="open_metrics_title">Opening speed</string>
+    <string name="open_metrics_detail">Latest successful time to first visible panel, stored on this device only. Network time includes waiting for a download. No titles or browsing history are recorded here.</string>
+    <string name="open_metrics_local">Local file</string>
+    <string name="open_metrics_cached">Downloaded chapter</string>
+    <string name="open_metrics_network">New online chapter</string>
+    <string name="open_metrics_value">%1$s: %2$.2f s</string>
+    <string name="open_metrics_empty">%1$s: not measured</string>
 </resources>

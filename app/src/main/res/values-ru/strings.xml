@@ -191,4 +191,17 @@
     <string name="source_issues_title">Ошибки источников</string>
     <string name="open_selected_chapter">Открыть: %1$s</string>
     <string name="opening_status">%1$s · %2$s</string>
+    <string name="progress_export_title">Прогресс чтения</string>
+    <string name="progress_export_detail">Сохрани JSON-копию библиотеки, закладок, времени чтения и настроек. Файлы глав не входят в копию. Импорт и восстановление пока недоступны. Храни файл в безопасном месте.</string>
+    <string name="progress_export">Экспортировать прогресс</string>
+    <string name="progress_export_working">Экспортируем прогресс…</string>
+    <string name="progress_export_success">Прогресс экспортирован</string>
+    <string name="progress_export_failed">Экспорт не выполнен. Библиотека не изменена. Не используй неполную копию.</string>
+    <string name="open_metrics_title">Скорость открытия</string>
+    <string name="open_metrics_detail">Последнее успешное измерение времени до первой видимой панели хранится только на устройстве. Для сети учитывается ожидание загрузки. Названия тайтлов и история поиска здесь не сохраняются.</string>
+    <string name="open_metrics_local">Локальный файл</string>
+    <string name="open_metrics_cached">Скачанная глава</string>
+    <string name="open_metrics_network">Новая онлайн-глава</string>
+    <string name="open_metrics_value">%1$s: %2$.2f с</string>
+    <string name="open_metrics_empty">%1$s: нет измерений</string>
 </resources>

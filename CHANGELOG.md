@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.7
+
+- Add offline regression fixtures for catalogues and queue recovery, and bookmark/export checks.
+- Show local-only first-panel opening measurements in settings.
+- Export library metadata, bookmarks, daily reading time and settings as JSON; no restore yet and no chapter files included.
+- Keep database schema, application ID and existing chapter storage unchanged.
+
 ## 0.2.6
 
 - Keep base image tiles stable while pinching and double-tapping; zoom no longer clears the displayed tile cache.

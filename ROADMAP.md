@@ -13,6 +13,12 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 
 [Download the latest signed APK](https://github.com/Lephiziel/panelume/releases/latest/download/Panelume.apk) · [What changed](CHANGELOG.md)
 
+## 0.2.7 candidate — reliability and progress export
+
+- Synthetic offline catalogue fixtures, queue recovery and bookmark tests.
+- Local timing of first visible panel (local, cached, network); collect actual pilot samples before choosing streaming work.
+- Read-only JSON progress export; files are excluded. Restore and merge remain a separate gated task.
+
 ## Priorities
 
 | Stage | What readers can expect us to work on |

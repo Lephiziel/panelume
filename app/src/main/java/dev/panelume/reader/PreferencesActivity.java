@@ -1,6 +1,8 @@
 package dev.panelume.reader;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.widget.Toast;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -11,6 +13,7 @@ import android.widget.TextView;
 
 public final class PreferencesActivity extends PanelumeActivity {
     static final String SETUP = "first_run";
+    private static final int EXPORT_PROGRESS = 27;
     private boolean setup;
     private int step;
 
@@ -62,6 +65,20 @@ public final class PreferencesActivity extends PanelumeActivity {
             Ui.gap(page, 10);
             Ui.add(page, Ui.button(this, getString(R.string.downloads_controls), false,
                 () -> startActivity(new Intent(this, DownloadsActivity.class))), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 25);
+            Ui.add(page, Ui.title(this, getString(R.string.progress_export_title), 26), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 10);
+            Ui.add(page, Ui.label(this, getString(R.string.progress_export_detail), 14, Ui.MUTED), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 8);
+            Ui.add(page, Ui.button(this, getString(R.string.progress_export), false, this::chooseExport), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 25);
+            Ui.add(page, Ui.title(this, getString(R.string.open_metrics_title), 26), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 8);
+            Ui.add(page, Ui.label(this, getString(R.string.open_metrics_detail), 13, Ui.MUTED), Ui.FILL, Ui.WRAP);
+            for (int type = 0; type < 3; type++) {
+                Ui.gap(page, 8);
+                Ui.add(page, Ui.label(this, OpenMetrics.label(this, type), 14, Ui.TEXT), Ui.FILL, Ui.WRAP);
+            }
             Ui.gap(page, 25);
             Ui.add(page, Ui.title(this, getString(R.string.available_sources), 26), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 10);
@@ -123,6 +140,36 @@ public final class PreferencesActivity extends PanelumeActivity {
         Ui.add(setting, toggle, Ui.FILL, Ui.WRAP);
         Ui.add(setting, Ui.label(this, getString(R.string.unmetered_detail), 13, Ui.MUTED), Ui.FILL, Ui.WRAP);
         Ui.add(page, setting, Ui.FILL, Ui.WRAP);
+    }
+
+    private void chooseExport() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            .setType("application/json").putExtra(Intent.EXTRA_TITLE, "panelume-progress-"
+                + java.time.LocalDate.now() + ".json");
+        try {
+            startActivityForResult(intent, EXPORT_PROGRESS);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.no_picker, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != EXPORT_PROGRESS || result != RESULT_OK || data == null || data.getData() == null) return;
+        Uri target = data.getData();
+        android.content.Context context = getApplicationContext();
+        Toast.makeText(this, R.string.progress_export_working, Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            int message = R.string.progress_export_success;
+            try {
+                ProgressExport.save(context, target);
+            } catch (java.io.IOException | RuntimeException e) {
+                message = R.string.progress_export_failed;
+            }
+            final int done = message;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                Toast.makeText(Prefs.localized(context), done, Toast.LENGTH_LONG).show());
+        }, "panelume-progress-export").start();
     }
 
     private void advance() {
