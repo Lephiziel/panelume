@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.8 (candidate)
+
+- Preview and merge v1 progress exports into existing identical chapter files without replacing valid bookmarks.
+- Merge read status and daily reading time monotonically using max, avoiding duplicate imports.
+- Skip missing/different content; no clean-install library reconstruction or chapter file import yet.
+
 ## 0.2.7
 
 - Add offline regression fixtures for catalogues and queue recovery, and bookmark/export checks.
