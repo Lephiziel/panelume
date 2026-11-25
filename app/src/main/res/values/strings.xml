@@ -95,7 +95,7 @@
     <string name="wait_save">Saving files. Please wait a moment.</string>
     <string name="opening_chapter">Opening chapter</string>
     <string name="jump_to_start">Jump to beginning</string>
-    <string name="reader_hint">Tap the page to hide controls</string>
+    <string name="reader_hint">Tap to hide controls · pinch to zoom · double-tap to reset</string>
     <string name="reader_accessibility">Chapter pages. Tap for controls. Scroll vertically to read.</string>
     <string name="page_error">Could not display this page</string>
     <string name="open_error">Could not open chapter</string>

@@ -20,7 +20,8 @@ interface CatalogSource {
     List<CatalogSource> SOURCES = Collections.unmodifiableList(Arrays.asList(
         new WebtoonSource(new CatalogHttp()), new WeebCentralSource(new CatalogHttp()),
         new MangaReadSource(new CatalogHttp()), new MangaDexSource(new CatalogHttp()),
-        new AtsumaruSource(new CatalogHttp())
+        new AtsumaruSource(new CatalogHttp()), new ArchiveComicSource(new CatalogHttp()),
+        new PepperCarrotSource(new CatalogHttp()), new XkcdSource(new CatalogHttp())
     ));
 
     static String names() {
