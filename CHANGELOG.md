@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.1 (candidate)
+## 0.3.1 (preview)
 
 - Bounded ahead-of-viewport tile prefetch while reading an already-open chapter.
 - Separate 4 MiB speculative cache, foreground priority between tile jobs, no speculative work while pinching, scrolling by touch or flinging.

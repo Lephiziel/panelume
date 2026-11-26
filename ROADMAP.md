@@ -60,11 +60,11 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Show last and median successful first-panel latency over up to 20 samples per opening type, local to the device and scoped to this build. No speedup is claimed before measured comparisons.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.0): 29 regression tests passed. Latest stable remains 0.2.9. Next: collect paired baseline/candidate measurements and live catalogue checks; evaluate bounded prefetch or streaming only after identifying bottlenecks. Device recovery and upgrade gates remain open.
 
-## 0.3.1 candidate — bounded offline tile prefetch
+## 0.3.1 preview — bounded offline tile prefetch
 
 - Prefetch at most two upcoming base-resolution tiles after the current viewport is rendered, only while idle, focused and not zoomed.
 - Keep speculative art in a separate 4 MiB cache; promote only on visibility. One decode in flight, retry speculative failures on demand, discard stale geometry results.
-- No network prefetch or chapter streaming; real-device scroll smoothness and memory measurements remain open.
+- [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.1): 33 regression tests passed. No network prefetch or chapter streaming; real-device scroll smoothness and memory measurements remain open. Latest stable remains 0.2.9. Next: reduce chapter opening overhead and prioritize user-requested downloads.
 
 ## Priorities
 
