@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.11 (candidate)
+## 0.2.11 (preview)
 
 - Add individually selectable settings restoration from existing portable library ZIPs: language, download-network policy and last search.
 - Keep all choices off by default, warn when mobile-data downloads would be enabled, and avoid submitting a restored search until the reader opens Search.
