@@ -44,18 +44,22 @@ final class OfflineStorage {
         return report;
     }
 
-    private static long archiveBytes(File root, String directory, String format) {
-        if (directory == null || !directory.matches("[a-fA-F0-9-]{36}")
-            || !("cbz".equals(format) || "pdf".equals(format))) return 0;
+    static File archive(File root, String directory, String format) {
+        if (directory == null || !directory.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+            || !("cbz".equals(format) || "pdf".equals(format))) return null;
         File file = new File(new File(root, directory), "chapter." + format);
         try {
-            // Reject unexpected paths rather than count another file through a symlink.
             if (!file.getCanonicalFile().equals(new File(root.getCanonicalFile(),
-                directory + "/chapter." + format))) return 0;
+                directory + "/chapter." + format))) return null;
         } catch (java.io.IOException e) {
-            return 0;
+            return null;
         }
-        return file.isFile() ? file.length() : 0;
+        return file;
+    }
+
+    static long archiveBytes(File root, String directory, String format) {
+        File file = archive(root,directory,format);
+        return file != null && file.isFile() ? file.length() : 0;
     }
 
     static final class Report {

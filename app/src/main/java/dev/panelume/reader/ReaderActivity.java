@@ -84,6 +84,12 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     }
 
     static Intent intent(Context context, long chapter, boolean restart, long requestedAt, boolean networkOpen) {
+        ShelfDb shelf = ShelfDb.get(context);
+        ShelfDb.Chapter stored = shelf.chapter(chapter);
+        if (stored != null && !stored.available(shelf.root) && !stored.provider.isEmpty()) {
+            CatalogSource.Title title = new CatalogQueue(shelf).title(stored.seriesId);
+            if (title != null) return CatalogActivity.redownload(context,title,stored.catalogId,restart);
+        }
         return new Intent(context, ReaderActivity.class).putExtra(CHAPTER, chapter).putExtra(RESTART, restart)
             .putExtra(REQUESTED_AT, requestedAt).putExtra(NETWORK_OPEN, networkOpen);
     }

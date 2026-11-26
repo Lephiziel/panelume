@@ -10,6 +10,7 @@ final class DownloadStatus {
             if (CatalogQueue.ACCESS.equals(job.error)) return context.getString(R.string.access_required);
             if (CatalogQueue.LIMIT.equals(job.error)) return context.getString(R.string.source_limit);
             if (CatalogQueue.NETWORK.equals(job.error)) return context.getString(R.string.network_error);
+            if (CatalogQueue.CHANGED.equals(job.error)) return context.getString(R.string.offline_chapter_changed);
             return context.getString(R.string.download_failed);
         }
         if (job.state == CatalogQueue.RUNNING && DownloadService.active) {

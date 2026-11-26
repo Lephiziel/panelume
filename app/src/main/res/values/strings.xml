@@ -213,7 +213,7 @@
     <string name="offline_storage_summary">Ready: %1$d · missing or empty: %2$d · %3$s</string>
     <string name="offline_storage_explanation">Counts downloaded and imported chapter archives only. Covers, bookmarks, temporary files and the database are excluded. This report checks file presence and size, not full archive integrity. Nothing is deleted.</string>
     <string name="offline_storage_failed">Could not check offline storage.</string>
-    <string name="library_backup_detail">Portable ZIP: library metadata, chapter files, covers, bookmarks and reading time. Restore only to an empty library. Selected settings can be restored; pending download jobs are excluded. Keep the ZIP private; large libraries need enough free space.</string>
+    <string name="library_backup_detail">Portable ZIP: library metadata, available chapter files, covers, bookmarks and reading time. Chapters without downloads retain metadata only. Restore only to an empty library. Selected settings can be restored; pending download jobs are excluded. Keep the ZIP private; large libraries need enough free space.</string>
     <string name="library_backup_export">Export library ZIP</string>
     <string name="library_backup_import">Restore library ZIP</string>
     <string name="library_backup_restore">Verify and restore</string>
@@ -231,4 +231,11 @@
     <string name="library_settings_search">Last search: %1$s (used when you open Search)</string>
     <string name="library_settings_empty_search">clear last search</string>
     <string name="library_settings_unconfirmed">Library restored. Settings could not be confirmed; check them manually.</string>
+    <string name="offline_remove">Remove downloaded file</string>
+    <string name="offline_remove_detail">Free the chapter archive but keep its cover, bookmark, read status and reading time. Download it again to read. The source may change or become unavailable; the old position is reliable only if the page layout stays the same.</string>
+    <string name="offline_remove_failed">Could not remove the file. Check active downloads and try again.</string>
+    <string name="offline_redownload">Download again</string>
+    <string name="offline_redownload_unavailable">Chapter is not available in the current catalogue. Your progress is retained.</string>
+    <string name="offline_chapter_changed">Chapter page count or format changed. Existing progress is retained; automatic replacement stopped.</string>
+    <string name="offline_missing_local">Local file missing</string>
 </resources>

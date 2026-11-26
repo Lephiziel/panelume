@@ -558,7 +558,9 @@ public final class MainActivity extends PanelumeActivity {
             label.setText(chapter.label(MainActivity.this));
             String state = chapter.done ? getString(R.string.read) : (chapter.opened > 0 ? getString(R.string.in_progress) : getString(R.string.unread));
             int ink = chapter.done ? Ui.MINT : (chapter.opened > 0 ? Ui.ACCENT : Ui.SOFT);
-            meta.setText(state + (chapter.ms > 0 ? "  ·  " + Ui.duration(MainActivity.this, chapter.ms) : ""));
+            meta.setText(state + (chapter.ms > 0 ? "  ·  " + Ui.duration(MainActivity.this, chapter.ms) : "")
+                + (!chapter.available(db.root) ? "  ·  " + getString(chapter.provider.isEmpty()
+                    ? R.string.offline_missing_local : R.string.offline_redownload) : ""));
             meta.setTextColor(ink);
             dot.setBackground(Ui.shape(MainActivity.this, ink, 12));
             more.setOnClickListener(v -> chapterMenu(v, chapter));
@@ -579,6 +581,21 @@ public final class MainActivity extends PanelumeActivity {
         if (chapter.provider.isEmpty()) {
             menu.getMenu().add(getString(R.string.edit_chapter)).setOnMenuItemClickListener(item -> {
                 edit(chapter);
+                return true;
+            });
+        }
+        if (!chapter.provider.isEmpty() && chapter.available(db.root)) {
+            menu.getMenu().add(getString(R.string.offline_remove)).setOnMenuItemClickListener(item -> {
+                new AlertDialog.Builder(this).setTitle(R.string.offline_remove)
+                    .setMessage(R.string.offline_remove_detail)
+                    .setNegativeButton(R.string.cancel,null)
+                    .setPositiveButton(R.string.offline_remove,(dialog,which) -> {
+                        try { db.evict(chapter.id); }
+                        catch (java.io.IOException | RuntimeException error) {
+                            android.widget.Toast.makeText(this,R.string.offline_remove_failed,android.widget.Toast.LENGTH_LONG).show();
+                        }
+                        draw(false);
+                    }).show();
                 return true;
             });
         }
