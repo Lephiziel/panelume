@@ -213,4 +213,14 @@
     <string name="offline_storage_summary">Ready: %1$d · missing or empty: %2$d · %3$s</string>
     <string name="offline_storage_explanation">Counts downloaded and imported chapter archives only. Covers, bookmarks, temporary files and the database are excluded. This report checks file presence and size, not full archive integrity. Nothing is deleted.</string>
     <string name="offline_storage_failed">Could not check offline storage.</string>
+    <string name="library_backup_detail">Portable ZIP: library metadata, chapter files, covers, bookmarks and reading time. Restore only to an empty library. Preferences and download jobs are not restored. Keep the ZIP private; large libraries need enough free space.</string>
+    <string name="library_backup_export">Export library ZIP</string>
+    <string name="library_backup_import">Restore library ZIP</string>
+    <string name="library_backup_restore">Verify and restore</string>
+    <string name="library_backup_working">Working with library files…</string>
+    <string name="library_backup_saved">Library ZIP saved</string>
+    <string name="library_backup_failed">Could not complete the backup. Do not use the incomplete ZIP. Existing library unchanged.</string>
+    <string name="library_backup_rejected">Restore not completed. Use a complete valid backup and an empty library with enough space. No existing chapters are replaced.</string>
+    <string name="library_backup_restored">Library restored. Return to your library to read.</string>
+    <string name="library_backup_preview">Series: %1$d · chapters: %2$d. Files and hashes will be checked before committing. The library must still be empty. Preferences and pending downloads will not be restored.</string>
 </resources>
