@@ -147,6 +147,7 @@ public final class DownloadService extends Service {
             int message = ((Fault) error).message;
             if (message == R.string.access_required) return CatalogQueue.ACCESS;
             if (message == R.string.source_limit) return CatalogQueue.LIMIT;
+            if (message == R.string.offline_chapter_changed) return CatalogQueue.CHANGED;
         }
         if (error instanceof UnknownHostException || error instanceof ConnectException || error instanceof SocketTimeoutException) {
             return CatalogQueue.NETWORK;

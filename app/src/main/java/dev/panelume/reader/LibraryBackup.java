@@ -53,7 +53,7 @@ final class LibraryBackup {
             zip.closeEntry();
             for (Chapter chapter : model.chapters) {
                 File folder = new File(shelf.root,chapter.directory);
-                exportFile(zip,shelf.root,folder,chapter,"chapter."+chapter.format,ImportFiles.MAX_BYTES,budget,chapter.hash);
+                if (chapter.present) exportFile(zip,shelf.root,folder,chapter,"chapter."+chapter.format,ImportFiles.MAX_BYTES,budget,chapter.hash);
                 exportFile(zip,shelf.root,folder,chapter,"cover.jpg",COVER_LIMIT,budget,null);
             }
             zip.putNextEntry(new ZipEntry(END));
@@ -78,7 +78,9 @@ final class LibraryBackup {
         try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(input))) {
             byte[] metadata = readMetadata(zip);
             Model model = model(metadata);
-            return new Preview(model.series.length(),model.chapters.size(),hash(metadata),model.settings);
+            int missing=0;
+            for (Chapter chapter:model.chapters) if (!chapter.present) missing++;
+            return new Preview(model.series.length(),model.chapters.size(),missing,hash(metadata),model.settings);
         }
     }
 
@@ -110,7 +112,7 @@ final class LibraryBackup {
                 if (!folder.mkdir()) throw new IOException("Cannot stage chapter");
                 staged.add(folder);
                 chapter.localDirectory = folder.getName();
-                extract(zip,chapter,folder,"chapter."+chapter.format,ImportFiles.MAX_BYTES,budget,chapter.hash);
+                if (chapter.present) extract(zip,chapter,folder,"chapter."+chapter.format,ImportFiles.MAX_BYTES,budget,chapter.hash);
                 extract(zip,chapter,folder,"cover.jpg",COVER_LIMIT,budget,null);
                 JSONObject bookmark = chapter.row.getJSONObject("bookmark");
                 Bookmark position = new Bookmark(new File(folder,"position"));
@@ -284,18 +286,24 @@ final class LibraryBackup {
                     throw new IOException("Invalid chapter number");
                 }
                 row.getString("source"); row.getString("caption"); row.getString("credit");
-                model.chapters.add(new Chapter(row,directory,format,hash));
+                // Old v1 backups always contain the archive. New v1 backups may omit
+                // online archives intentionally while retaining their reading metadata.
+                Object presentValue = row.has("archive_present") ? row.get("archive_present") : Boolean.TRUE;
+                if (!(presentValue instanceof Boolean)) throw new IOException("Invalid archive presence");
+                boolean present = (Boolean) presentValue;
+                if (!present && provider.isEmpty()) throw new IOException("Missing local chapter archive");
+                model.chapters.add(new Chapter(row,directory,format,hash,present));
             }
             return model;
         } catch (JSONException | RuntimeException e) { throw new IOException("Invalid library metadata",e); }
     }
 
     static final class Preview {
-        final int series,chapters;
+        final int series,chapters,missing;
         final String metadataHash;
         final BackupSettings settings;
-        Preview(int series,int chapters,String metadataHash,BackupSettings settings) {
-            this.series=series; this.chapters=chapters; this.metadataHash=metadataHash; this.settings=settings;
+        Preview(int series,int chapters,int missing,String metadataHash,BackupSettings settings) {
+            this.series=series; this.chapters=chapters; this.missing=missing; this.metadataHash=metadataHash; this.settings=settings;
         }
     }
     private static final class Budget { long bytes; }
@@ -310,9 +318,10 @@ final class LibraryBackup {
     private static final class Chapter {
         final JSONObject row;
         final String directory,format,hash;
+        final boolean present;
         String localDirectory;
-        Chapter(JSONObject row,String directory,String format,String hash) {
-            this.row=row; this.directory=directory; this.format=format; this.hash=hash;
+        Chapter(JSONObject row,String directory,String format,String hash,boolean present) {
+            this.row=row; this.directory=directory; this.format=format; this.hash=hash; this.present=present;
         }
     }
 }

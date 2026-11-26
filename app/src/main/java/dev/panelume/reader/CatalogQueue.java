@@ -16,6 +16,7 @@ final class CatalogQueue {
     static final String LIMIT = "limit";
     static final String NETWORK = "network";
     static final String FILE = "file";
+    static final String CHANGED = "chapter_changed";
 
     private static final String JOBS = "SELECT d.id,d.series_id,d.episode_id,d.number,d.caption,d.url,d.credit,"
         + "d.bulk,d.state,d.current_page,d.total_pages,d.error,"
@@ -47,7 +48,10 @@ final class CatalogQueue {
         try {
             long series = getOrCreate(db, title);
             for (CatalogSource.Episode episode : episodes) {
-                if (episode.external || savedId(db, series, episode.id) > 0) continue;
+                if (episode.external) continue;
+                long existing = savedId(db,series,episode.id);
+                ShelfDb.Chapter chapter = existing > 0 ? shelf.chapter(existing) : null;
+                if (chapter != null && chapter.available(shelf.root)) continue;
                 ContentValues values = new ContentValues();
                 values.put("series_id", series);
                 values.put("episode_id", episode.id);
@@ -207,6 +211,24 @@ final class CatalogQueue {
                 values.put("format", staged.format);
                 values.put("pages", staged.pages);
                 id = db.insertOrThrow("chapters", null, values);
+            } else {
+                ShelfDb.Chapter old = shelf.chapter(id);
+                if (old == null) throw new Fault(R.string.operation_cancelled);
+                if (!old.available(shelf.root)) {
+                    // A change in the page layout cannot safely inherit the old page anchor.
+                    if (old.pages != staged.pages || !old.format.equals(staged.format))
+                        throw new Fault(R.string.offline_chapter_changed);
+                    FilePair.copyPosition(shelf.root,old,directory);
+                    ContentValues replacement = new ContentValues();
+                    replacement.put("directory",directory);
+                    replacement.put("digest",staged.digest + ":" + job.episode.id);
+                    replacement.put("source",staged.name);
+                    replacement.put("caption",job.episode.name);
+                    replacement.put("credit",job.episode.credit);
+                    if (db.update("chapters",replacement,"id=?",args(id)) != 1)
+                        throw new Fault(R.string.operation_cancelled);
+                    // Old directory is unreferenced only after commit; orphan cleanup handles it.
+                }
             }
             db.delete("downloads", "id=?", args(job.id));
             db.setTransactionSuccessful();

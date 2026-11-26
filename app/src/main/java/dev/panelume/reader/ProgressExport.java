@@ -82,6 +82,8 @@ final class ProgressExport {
                 if (root != null) {
                     String directory = cursor.getString(cursor.getColumnIndexOrThrow("directory"));
                     if (!directory.matches("[a-fA-F0-9-]{36}")) throw new IOException("Invalid chapter directory");
+                    json.name("archive_present").value(OfflineStorage.archiveBytes(root,directory,
+                        cursor.getString(cursor.getColumnIndexOrThrow("format")))>0);
                     Bookmark.Position p = Bookmark.read(new File(new File(root, directory), "position"));
                     json.name("bookmark").beginObject();
                     json.name("page").value(p.page);

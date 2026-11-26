@@ -46,6 +46,9 @@ public final class CatalogActivity extends PanelumeActivity {
     private TextView cancel;
     private TextView retry;
     private String awaiting = "";
+    private String requestedEpisode = "";
+    private boolean requestedRestart;
+    private boolean awaitingRestart;
     private long awaitingSince;
     private String stateKey = "";
     private long localId;
@@ -59,6 +62,10 @@ public final class CatalogActivity extends PanelumeActivity {
         return new Intent(context, CatalogActivity.class)
             .putExtra("provider", title.provider).putExtra("id", title.id).putExtra("name", title.name)
             .putExtra("url", title.url).putExtra("cover", title.cover).putExtra("description", title.description);
+    }
+
+    static Intent redownload(Context context, CatalogSource.Title title, String episode, boolean restart) {
+        return intent(context,title).putExtra("requested_episode",episode).putExtra("requested_restart",restart);
     }
 
     @Override protected void onCreate(Bundle state) {
@@ -77,6 +84,12 @@ public final class CatalogActivity extends PanelumeActivity {
         if (state != null) {
             awaiting = state.getString("awaiting", "");
             awaitingSince = state.getLong("awaiting_since", 0L);
+            awaitingRestart = state.getBoolean("awaiting_restart");
+            requestedEpisode = state.getString("requested_episode","");
+            requestedRestart = state.getBoolean("requested_restart");
+        } else {
+            requestedEpisode = value(intent,"requested_episode");
+            requestedRestart = intent.getBooleanExtra("requested_restart",false);
         }
         build();
         load();
@@ -228,7 +241,7 @@ public final class CatalogActivity extends PanelumeActivity {
         }
         StringBuilder snapshot = new StringBuilder();
         for (ShelfDb.Chapter chapter : saved.values()) snapshot.append(chapter.id).append('/').append(chapter.opened)
-            .append('/').append(chapter.done).append(';');
+            .append('/').append(chapter.done).append('/').append(chapter.available(shelf.root)).append(';');
         for (CatalogQueue.Job job : jobs.values()) snapshot.append(job.id).append('/').append(job.state).append('/')
             .append(job.current).append('/').append(job.total).append('/').append(job.error).append(';');
         snapshot.append(DownloadService.active).append(DownloadService.allowBulk(this));
@@ -238,13 +251,25 @@ public final class CatalogActivity extends PanelumeActivity {
             updateHeader();
             rows.notifyDataSetChanged();
         }
+        if (resumed && feedLoaded && !requestedEpisode.isEmpty()) {
+            String id = requestedEpisode;
+            boolean restart = requestedRestart;
+            requestedEpisode = "";
+            for (CatalogSource.Episode episode : episodes) {
+                if (episode.id.equals(id) && !episode.external) {
+                    open(episode,restart);
+                    return;
+                }
+            }
+            Toast.makeText(this,R.string.offline_redownload_unavailable,Toast.LENGTH_LONG).show();
+        }
         if (resumed && !awaiting.isEmpty()) {
             ShelfDb.Chapter chapter = saved.get(awaiting);
             CatalogQueue.Job job = jobs.get(awaiting);
-            if (chapter != null) {
+            if (chapter != null && chapter.available(shelf.root)) {
                 awaiting = "";
                 updateHeader();
-                startActivity(ReaderActivity.intent(this, chapter.id, false, awaitingSince, true));
+                startActivity(ReaderActivity.intent(this, chapter.id, awaitingRestart, awaitingSince, true));
             } else if (job == null && !loading) {
                 awaiting = "";
                 updateHeader();
@@ -301,7 +326,8 @@ public final class CatalogActivity extends PanelumeActivity {
         int missing = 0;
         for (CatalogSource.Episode episode : episodes) {
             CatalogQueue.Job job = jobs.get(episode.id);
-            if (saved.containsKey(episode.id)) {
+            ShelfDb.Chapter stored = saved.get(episode.id);
+            if (stored != null && stored.available(shelf.root)) {
                 count++;
                 eligible++;
                 continue;
@@ -331,9 +357,17 @@ public final class CatalogActivity extends PanelumeActivity {
     }
 
     private void open(CatalogSource.Episode episode) {
+        open(episode,episode.id.equals(awaiting) && awaitingRestart);
+    }
+
+    private void open(CatalogSource.Episode episode, boolean restart) {
         ShelfDb.Chapter stored = saved.get(episode.id);
-        if (stored != null) {
-            startActivity(ReaderActivity.intent(this, stored.id, false));
+        if (stored != null && stored.available(shelf.root)) {
+            startActivity(ReaderActivity.intent(this, stored.id, restart));
+            return;
+        }
+        if (!feedLoaded) {
+            Toast.makeText(this,R.string.offline_redownload_unavailable,Toast.LENGTH_LONG).show();
             return;
         }
         CatalogQueue.Job job = jobs.get(episode.id);
@@ -344,6 +378,7 @@ public final class CatalogActivity extends PanelumeActivity {
             return;
         }
         awaiting = episode.id;
+        awaitingRestart = restart;
         awaitingSince = android.os.SystemClock.elapsedRealtime();
         localId = queue.enqueue(title, Collections.singletonList(episode), false);
         DownloadService.begin(this, false);
@@ -395,6 +430,9 @@ public final class CatalogActivity extends PanelumeActivity {
         super.onSaveInstanceState(state);
         state.putString("awaiting", awaiting);
         state.putLong("awaiting_since", awaitingSince);
+        state.putBoolean("awaiting_restart", awaitingRestart);
+        state.putString("requested_episode", requestedEpisode);
+        state.putBoolean("requested_restart", requestedRestart);
     }
 
     private final class Rows extends BaseAdapter {
@@ -405,7 +443,8 @@ public final class CatalogActivity extends PanelumeActivity {
             CatalogSource.Episode episode = getItem(position);
             ShelfDb.Chapter stored = saved.get(episode.id);
             CatalogQueue.Job job = jobs.get(episode.id);
-            boolean external = stored == null && (episode.external || (job != null && CatalogQueue.ACCESS.equals(job.error)));
+            boolean ready = stored != null && stored.available(shelf.root);
+            boolean external = !ready && (episode.external || (job != null && CatalogQueue.ACCESS.equals(job.error)));
             LinearLayout row = Ui.row(CatalogActivity.this);
             Ui.pad(row, 22, 11, 18, 11);
             row.setMinimumHeight(Ui.dp(CatalogActivity.this, 69));
@@ -421,14 +460,16 @@ public final class CatalogActivity extends PanelumeActivity {
             Ui.add(text, name, Ui.FILL, Ui.WRAP);
             Ui.gap(text, 4);
             String status = external ? getString(R.string.external_open, source.name())
-                : stored != null ? getString(stored.done ? R.string.read : stored.opened > 0 ? R.string.in_progress
-                    : R.string.offline_available) : job != null ? DownloadStatus.label(CatalogActivity.this, job) : "";
+                : ready ? getString(stored.done ? R.string.read : stored.opened > 0 ? R.string.in_progress
+                    : R.string.offline_available) : job != null ? DownloadStatus.label(CatalogActivity.this, job)
+                    : stored != null ? getString(R.string.offline_redownload) : "";
+            if (stored != null && !ready && stored.done) status += " · " + getString(R.string.read);
             if (!episode.credit.isEmpty()) status += (status.isEmpty() ? "" : " · ") + episode.credit;
             if (!status.isEmpty()) Ui.add(text, Ui.label(CatalogActivity.this, status, 12,
                 stored != null && stored.done ? Ui.MINT : Ui.MUTED), Ui.FILL, Ui.WRAP);
             Ui.weighted(row, text);
-            Ui.add(row, new Ui.Icon(CatalogActivity.this, external ? "external" : stored != null ? "done" : "next",
-                stored != null ? Ui.MINT : Ui.SOFT, 18), 30, 36);
+            Ui.add(row, new Ui.Icon(CatalogActivity.this, external ? "external" : ready ? "done" : "next",
+                ready ? Ui.MINT : Ui.SOFT, 18), 30, 36);
             LinearLayout cell = Ui.column(CatalogActivity.this);
             Ui.add(cell, row, Ui.FILL, Ui.WRAP);
             Ui.rule(cell);

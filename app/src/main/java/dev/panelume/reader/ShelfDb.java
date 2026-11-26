@@ -274,6 +274,24 @@ final class ShelfDb extends SQLiteOpenHelper {
         return result;
     }
 
+    // Only online chapters can be evicted. The row, cover and position remain.
+    void evict(long id) throws IOException {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransactionNonExclusive();
+        try {
+            Chapter chapter = chapter(id);
+            if (chapter == null || chapter.provider.isEmpty() || chapter.catalogId.isEmpty()
+                || CatalogSource.named(chapter.provider) == null) throw new Fault(R.string.offline_remove_failed);
+            try (Cursor cursor = db.rawQuery("SELECT 1 FROM downloads WHERE series_id=? AND episode_id=?",
+                new String[]{Long.toString(chapter.seriesId),chapter.catalogId})) {
+                if (cursor.moveToFirst()) throw new Fault(R.string.offline_remove_failed);
+            }
+            File file = OfflineStorage.archive(root,chapter.directory,chapter.format);
+            if (file == null || !file.isFile() || !file.delete()) throw new Fault(R.string.offline_remove_failed);
+            db.setTransactionSuccessful();
+        } finally { db.endTransaction(); }
+    }
+
     void remove(Chapter chapter) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransactionNonExclusive();
@@ -361,6 +379,10 @@ final class ShelfDb extends SQLiteOpenHelper {
 
         File file(File root) {
             return new File(new File(root, directory), "chapter." + format);
+        }
+
+        boolean available(File root) {
+            return OfflineStorage.archiveBytes(root,directory,format)>0;
         }
 
         File bookmark(File root) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.12 (candidate)
+
+- Remove a catalogue chapter download without removing its reading history, bookmark or cover.
+- Redownload unavailable catalogue chapters under their existing database ID; reject a changed page count or format.
+- Preserve missing catalogue chapter metadata in portable ZIP backups; older complete ZIP backups remain supported.
+- No database migration. Real-device checks remain required.
+
 ## 0.2.11 (preview)
 
 - Add individually selectable settings restoration from existing portable library ZIPs: language, download-network policy and last search.

@@ -295,6 +295,12 @@ public final class PreferencesActivity extends PanelumeActivity {
         TextView summary = new TextView(this);
         summary.setText(getString(R.string.library_backup_preview, preview.series, preview.chapters));
         content.addView(summary);
+        if (preview.missing>0) {
+            TextView missing = new TextView(this);
+            missing.setText(getString(R.string.library_backup_missing,preview.missing));
+            Ui.pad(missing,0,8,0,0);
+            content.addView(missing);
+        }
         BackupSettings settings = preview.settings;
         int[] selected = {0};
         if (settings.available() != 0) {
