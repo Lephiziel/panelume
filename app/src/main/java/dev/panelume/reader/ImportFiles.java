@@ -163,7 +163,17 @@ final class ImportFiles {
         return inspect(file, displayName, "cbz", sha);
     }
 
+    static Staged inspectDownloadedArchive(File file, String displayName, byte[] digest) throws IOException {
+        if (digest == null || digest.length != 32 || file.length() <= 0 || file.length() > MAX_BYTES)
+            throw new Fault(R.string.file_limit);
+        return inspect(file, displayName, "cbz", digest);
+    }
+
     private static Staged inspect(File file, String displayName, String format, MessageDigest sha) throws IOException {
+        return inspect(file,displayName,format,sha.digest());
+    }
+
+    private static Staged inspect(File file, String displayName, String format, byte[] sha) throws IOException {
         String name = cleanName(displayName, format);
         Names.Guess guess = Names.guess(name);
         try (MangaDocument doc = MangaDocument.open(file, format)) {
@@ -178,7 +188,7 @@ final class ImportFiles {
             String title = doc.series.isEmpty() ? guess.title : doc.series;
             String number = doc.number.isEmpty() ? guess.number : doc.number;
             StringBuilder digest = new StringBuilder(64);
-            for (byte b : sha.digest()) digest.append(String.format(Locale.ROOT, "%02x", b & 255));
+            for (byte b : sha) digest.append(String.format(Locale.ROOT, "%02x", b & 255));
             return new Staged(file, name, format, digest.toString(), doc.pages.length,
                 shorten(title, 120), number, guess.title, thumbnail.toByteArray());
         }
@@ -206,7 +216,7 @@ final class ImportFiles {
         return value.substring(0, end);
     }
 
-    private static MessageDigest sha256() {
+    static MessageDigest sha256() {
         try {
             return MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {

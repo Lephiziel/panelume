@@ -196,7 +196,7 @@
     <string name="progress_export_success">Progress exported</string>
     <string name="progress_export_failed">Export failed. Your library is unchanged. Do not use the incomplete export.</string>
     <string name="open_metrics_title">Opening speed</string>
-    <string name="open_metrics_detail">Latest successful time to first visible panel, stored on this device only. Network time includes waiting for a download. No titles or browsing history are recorded here.</string>
+    <string name="open_metrics_detail">Latest and median time to first visible panel for up to 20 successful openings per type in this build. Network time includes download waiting. Measurements are local; failures are not included. No titles or browsing history are recorded here.</string>
     <string name="open_metrics_local">Local file</string>
     <string name="open_metrics_cached">Downloaded chapter</string>
     <string name="open_metrics_network">New online chapter</string>
@@ -247,4 +247,5 @@
     <string name="offline_remove_selected">Remove selected downloads</string>
     <string name="offline_remove_result">Removed: %1$d · changed/skipped: %2$d · failed: %3$d. Archive bytes removed: %4$s. Reading history is retained.</string>
     <string name="offline_refresh">Refresh storage</string>
+    <string name="open_metrics_distribution">%1$s: last %2$.2f s · median %3$.2f s · n=%4$d</string>
 </resources>

@@ -28,3 +28,7 @@ Start with 10–15 volunteers. Observe five independent installation attempts an
 | — | — | — | — | — | — | Not yet measured | — |
 
 Do not infer installations from APK download counts. Revisit the streaming prototype only if repeated first-session delays are observed on comparable chapters and networks. Keep offline deletion disabled until reading metadata can survive file removal and restoration.
+
+## Paired opening-performance experiment (0.3.0)
+
+Compare 0.2.13 and 0.3.0 on separate disposable profiles with the same device, chapter, page count, network and source. Never downgrade a populated installation. Record at least 10 attempts per version and opening type, including failed attempts and bytes transferred. Alternate versions or use matching network conditions; distinguish cached, local and newly downloaded chapters. Report median latency for successful attempts, success fraction and range; do not infer a speedup from CI or combine different sources. The app shows a rolling median of up to 20 successful openings per type for 0.3.0; older last-only metrics are not included. No measurements yet.

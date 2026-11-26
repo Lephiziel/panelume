@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 (candidate)
+
+- Compute online CBZ SHA-256 during archive writing, avoiding a separate full-file read before inspection.
+- Keep existing image/ZIP validation, size limits and disk sync before registration.
+- Add local median and sample count for first-panel latency, separately for local, cached and online openings.
+- No database or backup migration; real-world speedup and physical-device recovery remain unverified.
+
 ## 0.2.13 (preview)
 
 - Manage offline archive space by series, largest first, with optional completed-only selection and explicit confirmation.
