@@ -29,6 +29,7 @@ final class ReaderCanvas extends View {
     private static final int TILE_HEIGHT = 320;
     private static final int CACHE_BYTES = 24 * 1024 * 1024;
     private static final int DETAIL_BYTES = 32 * 1024 * 1024;
+    private static final int PREFETCH_BYTES = 4 * 1024 * 1024;
 
     interface Observer {
         void viewport(int page, double fraction, int percent, double bottom,
@@ -55,6 +56,11 @@ final class ReaderCanvas extends View {
     private final LruCache<Long, Bitmap> detailCache = new LruCache<Long, Bitmap>(DETAIL_BYTES) {
         @Override protected int sizeOf(Long key, Bitmap value) { return value.getAllocationByteCount(); }
     };
+    // Separate speculative cache: prefetch never evicts visible base or detail art.
+    private final LruCache<Long, Bitmap> ahead = new LruCache<Long, Bitmap>(PREFETCH_BYTES) {
+        @Override protected int sizeOf(Long key, Bitmap value) { return value.getAllocationByteCount(); }
+    };
+    private final Set<Long> prefetchFailed = new java.util.LinkedHashSet<>();
     private final Set<Long> failed = new HashSet<>();
     private final Set<Long> detailFailed = new HashSet<>();
     private final double[] starts;
@@ -66,6 +72,8 @@ final class ReaderCanvas extends View {
     private double left;
     private float lastFocusX, lastFocusY;
     private boolean multiTouch;
+    private boolean touching;
+    private int geometryGeneration;
     private double scale;
     private double y;
     private double flingOrigin;
@@ -168,6 +176,9 @@ final class ReaderCanvas extends View {
         int wanted = Math.min(panelWidth, 1280);
         if (wanted != bitmapWidth) {
             bitmapWidth = wanted;
+            geometryGeneration++;
+            ahead.evictAll();
+            prefetchFailed.clear();
             cache.evictAll();
             detailCache.evictAll();
             failed.clear();
@@ -230,6 +241,10 @@ final class ReaderCanvas extends View {
                 int screenBottom = (int) Math.round(starts[page] + (top + tileHeight) * scale - y);
                 target.set((int) Math.round(left), screenTop, (int) Math.round(left + contentWidth()), screenBottom);
                 Bitmap bitmap = cache.get(key);
+                if (bitmap == null) {
+                    bitmap = ahead.remove(key);
+                    if (bitmap != null) cache.put(key,bitmap);
+                }
                 Bitmap detail = wantDetail ? detailCache.get(key) : null;
                 if (wantDetail) {
                     visibleDetailBytes += (long) detailWidth() * detailHeight(page, top, tileHeight) * 4;
@@ -268,6 +283,10 @@ final class ReaderCanvas extends View {
         // fingers lift; never chase a detail working set bigger than the detail cache.
         else if (wantDetail && !multiTouch && detailPage != -1
             && visibleDetailBytes <= DETAIL_BYTES) queue(detailPage, detailTile, true);
+        else if (all && any && zoom == 1.0 && !touching && !multiTouch
+            && scroller.isFinished() && hasWindowFocus() && isShown() && !tilePending) {
+            prefetch(bottomY);
+        }
 
         double anchor = anchorAt(y);
         double maxContentScroll = Math.max(1, storyHeight() - getHeight());
@@ -277,6 +296,15 @@ final class ReaderCanvas extends View {
         // A cropped viewport is not proof that the entire panel was read.
         observer.viewport((int) anchor, anchor - (int) anchor, percent, anchorAt(bottomY),
             any, all && any && zoom == 1.0, end && zoom == 1.0);
+    }
+
+    private void prefetch(double bottomY) {
+        if (bottomY >= storyHeight()) return;
+        int page = pageAt(bottomY);
+        long next = PrefetchTiles.next(page,(bottomY-starts[page])/scale,document.pages.length,TILE_HEIGHT,
+            index->document.heightAtWidth(index,bitmapWidth),
+            k->cache.get(k)==null && ahead.get(k)==null && !failed.contains(k) && !prefetchFailed.contains(k));
+        if (next>=0) queue((int)(next>>>32),(int)next,false,true);
     }
 
     private long key(int page, int top) {
@@ -295,7 +323,12 @@ final class ReaderCanvas extends View {
     }
 
     private void queue(int page, int top, boolean detail) {
+        queue(page,top,detail,false);
+    }
+
+    private void queue(int page,int top,boolean detail,boolean speculative) {
         if (tilePending || released) return;
+        final int generation=geometryGeneration;
         final int baseWidth = bitmapWidth;
         final int baseHeight = Math.min(TILE_HEIGHT, document.heightAtWidth(page, baseWidth) - top);
         final int width = detail ? detailWidth() : baseWidth;
@@ -313,8 +346,15 @@ final class ReaderCanvas extends View {
             Bitmap result = bitmap;
             main.post(() -> {
                 tilePending = false;
-                if (!released && baseWidth == bitmapWidth) {
-                    if (detail) {
+                if (!released && generation==geometryGeneration && baseWidth == bitmapWidth) {
+                    if (speculative) {
+                        // A speculative failure is not a visible failure. Retry on demand.
+                        if (result==null) {
+                            if (prefetchFailed.size()>=64) prefetchFailed.remove(prefetchFailed.iterator().next());
+                            prefetchFailed.add(key);
+                        }
+                        else ahead.put(key,result);
+                    } else if (detail) {
                         if (result == null) detailFailed.add(key);
                         else detailCache.put(key, result);
                     } else {
@@ -395,7 +435,7 @@ final class ReaderCanvas extends View {
     public boolean onTouchEvent(MotionEvent event) {
         if (released) return false;
         int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_DOWN) multiTouch = false;
+        if (action == MotionEvent.ACTION_DOWN) { touching=true; multiTouch=false; }
         if (action == MotionEvent.ACTION_POINTER_DOWN && !multiTouch) {
             multiTouch = true;
             MotionEvent cancel = MotionEvent.obtain(event);
@@ -406,11 +446,19 @@ final class ReaderCanvas extends View {
         pinch.onTouchEvent(event);
         if (!multiTouch) gestures.onTouchEvent(event);
         if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            touching = false;
             multiTouch = false;
             // Start detail decoding even when the final pinch event did not change zoom.
             postInvalidateOnAnimation();
         }
         return true;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean focused) {
+        super.onWindowFocusChanged(focused);
+        if (!focused) { touching=false; multiTouch=false; }
+        else if (!released) invalidate();
     }
 
     @Override
@@ -465,6 +513,8 @@ final class ReaderCanvas extends View {
     void release() {
         released = true;
         freeze();
+        ahead.evictAll();
+        prefetchFailed.clear();
         cache.evictAll();
         detailCache.evictAll();
         worker.execute(() -> {
