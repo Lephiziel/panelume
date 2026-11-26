@@ -29,11 +29,11 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Report chapter archive sizes and missing or empty files by series. No deletion, repair, or full archive validation yet.
 - Record device and pilot scenarios in [testing/pilot.md](docs/testing/pilot.md); no device results claimed.
 
-## 0.2.10 candidate — portable library ZIP
+## 0.2.10 preview — portable library ZIP
 
 - Export metadata and registered chapter archives/covers; restore only into an empty database, with strict ZIP paths, bounded extraction and SHA-256 verification before inserting rows.
 - Repeated restore refuses to modify the populated library. Existing JSON merge remains available.
-- Full physical-device restore, preferences transfer, and safe removal of offline files while retaining progress remain open.
+- [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.2.10): 17 regression tests passed on synthetic fixtures. Latest stable remains 0.2.9. Full physical-device restore with real CBZ/PDF, preferences transfer, and safe removal of offline files while retaining progress remain open.
 
 ## Priorities
 

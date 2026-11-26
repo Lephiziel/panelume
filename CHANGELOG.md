@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.10 (candidate)
+## 0.2.10 (preview)
 
 - Add a local ZIP library backup with version-1 progress metadata, chapter archives and covers.
 - Preview and restore into an empty library only, validate archive hashes and bounds, stage files before committing metadata, refuse duplicate restores.
