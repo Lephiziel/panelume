@@ -2,6 +2,7 @@ package dev.panelume.reader;
 
 import android.database.Cursor;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -17,7 +18,7 @@ final class OfflineStorage {
         Report report = new Report();
         Map<Long, Entry> groups = new LinkedHashMap<>();
         try (Cursor c = shelf.getReadableDatabase().rawQuery(
-            "SELECT s.id,s.title,s.catalog_provider,c.directory,c.format FROM chapters c "
+            "SELECT s.id,s.title,s.catalog_provider,c.directory,c.format,c.id,c.catalog_id,c.done FROM chapters c "
                 + "JOIN series s ON s.id=c.series_id ORDER BY s.id,c.id", null)) {
             while (c.moveToNext()) {
                 long id = c.getLong(0);
@@ -32,6 +33,12 @@ final class OfflineStorage {
                     entry.bytes += bytes;
                     report.ready++;
                     report.bytes += bytes;
+                    if (!entry.provider.isEmpty() && !c.getString(6).isEmpty()
+                        && CatalogSource.named(entry.provider)!=null) {
+                        entry.candidates.add(new Candidate(c.getLong(5),id,c.getString(3),c.getString(4),bytes,c.getInt(7)==1));
+                        entry.reclaimable += bytes;
+                        report.reclaimable += bytes;
+                    }
                 } else {
                     entry.missing++;
                     report.missing++;
@@ -62,16 +69,44 @@ final class OfflineStorage {
         return file != null && file.isFile() ? file.length() : 0;
     }
 
+    // Only the exact confirmed snapshot is eligible. Never enumerate new files during deletion.
+    static Result evict(ShelfDb shelf, List<Candidate> selected) {
+        Result result = new Result();
+        java.util.Set<Long> visited = new java.util.HashSet<>();
+        for (Candidate candidate : selected) {
+            if (!visited.add(candidate.id)) continue;
+            try {
+                long removed = shelf.evictSnapshot(candidate);
+                if (removed > 0) { result.removed++; result.bytes += removed; }
+                else result.skipped++;
+            } catch (IOException | RuntimeException error) { result.failed++; }
+        }
+        return result;
+    }
+
+    static final class Candidate {
+        final long id, seriesId, bytes;
+        final String directory, format;
+        final boolean done;
+        Candidate(long id,long seriesId,String directory,String format,long bytes,boolean done) {
+            this.id=id; this.seriesId=seriesId; this.directory=directory; this.format=format;
+            this.bytes=bytes; this.done=done;
+        }
+    }
+
+    static final class Result { int removed, skipped, failed; long bytes; }
+
     static final class Report {
         int ready, missing;
-        long bytes;
+        long bytes, reclaimable;
         final List<Entry> series = new ArrayList<>();
     }
 
     static final class Entry {
         final String title, provider;
         int ready, missing;
-        long bytes;
+        long bytes, reclaimable;
+        final List<Candidate> candidates = new ArrayList<>();
         Entry(String title, String provider) { this.title = title; this.provider = provider; }
     }
 }

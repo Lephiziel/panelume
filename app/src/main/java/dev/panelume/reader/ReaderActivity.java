@@ -98,7 +98,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         db = ShelfDb.get(this);
-        chapter = db.chapter(getIntent().getLongExtra(CHAPTER, -1));
+        chapter = db.acquireReader(getIntent().getLongExtra(CHAPTER, -1));
         if (chapter == null) {
             finish();
             return;
@@ -473,6 +473,11 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         destroyed = true;
         if (receiverRegistered) unregisterReceiver(screen);
         if (canvas != null) canvas.release();
+        if (chapter != null) {
+            // Release after queued rendering work and bookmark flush have completed.
+            long id = chapter.id;
+            renderer.execute(() -> db.releaseReader(id));
+        }
         renderer.shutdown();
         super.onDestroy();
     }
