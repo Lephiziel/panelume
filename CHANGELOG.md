@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.11 (candidate)
+
+- Add individually selectable settings restoration from existing portable library ZIPs: language, download-network policy and last search.
+- Keep all choices off by default, warn when mobile-data downloads would be enabled, and avoid submitting a restored search until the reader opens Search.
+- Ignore invalid or unknown preferences; apply selected settings only after successful library recovery. No database or backup-format migration.
+
 ## 0.2.10 (preview)
 
 - Add a local ZIP library backup with version-1 progress metadata, chapter archives and covers.

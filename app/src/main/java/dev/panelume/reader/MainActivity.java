@@ -33,6 +33,7 @@ public final class MainActivity extends PanelumeActivity {
     private static final int SEARCH = 3;
     private static final int SETUP = 13;
     private static final int IMPORT = 12;
+    private static final int SETTINGS = 14;
 
     private ShelfDb db;
     private CatalogQueue queue;
@@ -199,7 +200,7 @@ public final class MainActivity extends PanelumeActivity {
         Ui.add(header, Ui.iconButton(this, "download", getString(R.string.downloads), Ui.BG, Ui.MUTED,
             () -> startActivity(new Intent(this, DownloadsActivity.class))), 48, 48);
         Ui.add(header, Ui.iconButton(this, "settings", getString(R.string.settings), Ui.BG, Ui.MUTED,
-            () -> startActivity(new Intent(this, PreferencesActivity.class))), 48, 48);
+            () -> startActivityForResult(new Intent(this, PreferencesActivity.class), SETTINGS)), 48, 48);
         return header;
     }
 
@@ -766,6 +767,13 @@ public final class MainActivity extends PanelumeActivity {
         if (request == SETUP) {
             setupLaunched = false;
             if (!Prefs.ready(this)) finish();
+        }
+        if (request == SETTINGS && result == RESULT_OK) {
+            if (catalog != null) { catalog.close(); catalog = null; }
+            onlineQuery = Prefs.lastSearch(this);
+            // Do not automatically submit a restored search to remote providers.
+            tab = HOME;
+            seriesId = -1;
         }
         if (request == IMPORT && result == RESULT_OK && data != null) {
             tab = LIBRARY;

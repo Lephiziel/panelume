@@ -277,11 +277,7 @@ public final class PreferencesActivity extends PanelumeActivity {
                 runOnUiThread(() -> {
                     libraryBusy = false;
                     if (isFinishing() || isDestroyed()) return;
-                    new android.app.AlertDialog.Builder(this).setTitle(R.string.library_backup_import)
-                        .setMessage(getString(R.string.library_backup_preview, preview.series, preview.chapters))
-                        .setNegativeButton(R.string.cancel, null)
-                        .setPositiveButton(R.string.library_backup_restore, (dialog, which) -> restoreLibrary(uri, preview))
-                        .show();
+                    showLibraryPreview(uri, preview);
                 });
             } catch (java.io.IOException | RuntimeException error) {
                 runOnUiThread(() -> {
@@ -292,7 +288,49 @@ public final class PreferencesActivity extends PanelumeActivity {
         }, "panelume-library-preview").start();
     }
 
-    private void restoreLibrary(Uri uri, LibraryBackup.Preview preview) {
+    private void showLibraryPreview(Uri uri, LibraryBackup.Preview preview) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        Ui.pad(content, 22, 12, 22, 8);
+        TextView summary = new TextView(this);
+        summary.setText(getString(R.string.library_backup_preview, preview.series, preview.chapters));
+        content.addView(summary);
+        BackupSettings settings = preview.settings;
+        int[] selected = {0};
+        if (settings.available() != 0) {
+            TextView hint = new TextView(this);
+            hint.setText(R.string.library_settings_optional);
+            Ui.pad(hint, 0, 14, 0, 4);
+            content.addView(hint);
+        }
+        if (settings.language != null) backupOption(content, selected, BackupSettings.LANGUAGE,
+            getString(R.string.library_settings_language, "ru".equals(settings.language) ? "Русский" : "English"));
+        if (settings.unmetered != null) backupOption(content, selected, BackupSettings.NETWORK,
+            getString(R.string.library_settings_network, getString(settings.unmetered
+                ? R.string.library_settings_wifi : R.string.library_settings_mobile)));
+        if (settings.lastSearch != null) backupOption(content, selected, BackupSettings.SEARCH,
+            getString(R.string.library_settings_search, settings.lastSearch.isEmpty()
+                ? getString(R.string.library_settings_empty_search) : settings.lastSearch));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(content);
+        new android.app.AlertDialog.Builder(this).setTitle(R.string.library_backup_import)
+            .setView(scroll).setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.library_backup_restore, (dialog, which) ->
+                restoreLibrary(uri, preview, selected[0])).show();
+    }
+
+    private void backupOption(LinearLayout content, int[] selected, int bit, String label) {
+        android.widget.CheckBox box = new android.widget.CheckBox(this);
+        box.setText(label);
+        box.setChecked(false);
+        box.setOnCheckedChangeListener((button, checked) -> {
+            if (checked) selected[0] |= bit;
+            else selected[0] &= ~bit;
+        });
+        content.addView(box);
+    }
+
+    private void restoreLibrary(Uri uri, LibraryBackup.Preview preview, int selected) {
         if (libraryBusy || importing) return;
         libraryBusy = true;
         android.content.Context context = getApplicationContext();
@@ -301,14 +339,21 @@ public final class PreferencesActivity extends PanelumeActivity {
             int message = R.string.library_backup_restored;
             try (java.io.InputStream in = context.getContentResolver().openInputStream(uri)) {
                 if (in == null) throw new java.io.IOException("No input");
-                LibraryBackup.restore(ShelfDb.get(context), in, preview);
+                if (!LibraryBackup.restoreWithSettings(context, ShelfDb.get(context), in, preview, selected)) {
+                    message = R.string.library_settings_unconfirmed;
+                }
             } catch (java.io.IOException | RuntimeException error) {
                 message = R.string.library_backup_rejected;
             }
             final int done = message;
             runOnUiThread(() -> {
                 libraryBusy = false;
-                if (!isFinishing() && !isDestroyed()) Toast.makeText(this, done, Toast.LENGTH_LONG).show();
+                if (isFinishing() || isDestroyed()) return;
+                Toast.makeText(Prefs.localized(context), done, Toast.LENGTH_LONG).show();
+                if (done != R.string.library_backup_rejected) {
+                    setResult(RESULT_OK);
+                    finish();
+                }
             });
         }, "panelume-library-restore").start();
     }
