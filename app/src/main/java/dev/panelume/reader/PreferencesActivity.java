@@ -16,6 +16,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     private static final int EXPORT_PROGRESS = 27;
     private static final int IMPORT_PROGRESS = 28;
     private boolean importing;
+    private boolean storageLoading;
     private boolean setup;
     private int step;
 
@@ -67,6 +68,8 @@ public final class PreferencesActivity extends PanelumeActivity {
             Ui.gap(page, 10);
             Ui.add(page, Ui.button(this, getString(R.string.downloads_controls), false,
                 () -> startActivity(new Intent(this, DownloadsActivity.class))), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 8);
+            Ui.add(page, Ui.button(this, getString(R.string.offline_storage_title), false, this::showStorage), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 25);
             Ui.add(page, Ui.title(this, getString(R.string.progress_export_title), 26), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 10);
@@ -144,6 +147,38 @@ public final class PreferencesActivity extends PanelumeActivity {
         Ui.add(setting, toggle, Ui.FILL, Ui.WRAP);
         Ui.add(setting, Ui.label(this, getString(R.string.unmetered_detail), 13, Ui.MUTED), Ui.FILL, Ui.WRAP);
         Ui.add(page, setting, Ui.FILL, Ui.WRAP);
+    }
+
+    private void showStorage() {
+        if (importing || storageLoading) return;
+        storageLoading = true;
+        Toast.makeText(this, R.string.offline_storage_loading, Toast.LENGTH_SHORT).show();
+        android.content.Context context = getApplicationContext();
+        new Thread(() -> {
+            try {
+                OfflineStorage.Report report = OfflineStorage.scan(ShelfDb.get(context));
+                runOnUiThread(() -> {
+                    storageLoading = false;
+                    if (isFinishing() || isDestroyed()) return;
+                    StringBuilder message = new StringBuilder(getString(R.string.offline_storage_summary,
+                        report.ready, report.missing, android.text.format.Formatter.formatFileSize(this, report.bytes)));
+                    message.append("\n\n").append(getString(R.string.offline_storage_explanation));
+                    for (OfflineStorage.Entry entry : report.series) {
+                        message.append("\n\n").append(entry.title);
+                        if (!entry.provider.isEmpty()) message.append(" · ").append(CatalogSource.label(entry.provider));
+                        message.append("\n").append(getString(R.string.offline_storage_summary,
+                            entry.ready, entry.missing, android.text.format.Formatter.formatFileSize(this, entry.bytes)));
+                    }
+                    new android.app.AlertDialog.Builder(this).setTitle(R.string.offline_storage_title)
+                        .setMessage(message.toString()).setPositiveButton(android.R.string.ok, null).show();
+                });
+            } catch (RuntimeException error) {
+                runOnUiThread(() -> {
+                    storageLoading = false;
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this, R.string.offline_storage_failed, Toast.LENGTH_LONG).show();
+                });
+            }
+        }, "panelume-storage-report").start();
     }
 
     private void chooseExport() {

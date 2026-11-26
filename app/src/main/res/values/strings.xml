@@ -208,4 +208,9 @@
     <string name="progress_import_invalid">Could not read a complete supported progress backup. Nothing was changed.</string>
     <string name="progress_import_done">Matched %1$d · skipped %2$d · bookmark errors %3$d</string>
     <string name="progress_import_failed">Merge interrupted. Existing files are unchanged; some empty bookmarks may have been restored. Retry with the same backup.</string>
+    <string name="offline_storage_title">Offline storage</string>
+    <string name="offline_storage_loading">Checking local chapter files…</string>
+    <string name="offline_storage_summary">Ready: %1$d · missing or empty: %2$d · %3$s</string>
+    <string name="offline_storage_explanation">Counts downloaded and imported chapter archives only. Covers, bookmarks, temporary files and the database are excluded. This report checks file presence and size, not full archive integrity. Nothing is deleted.</string>
+    <string name="offline_storage_failed">Could not check offline storage.</string>
 </resources>

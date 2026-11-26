@@ -210,4 +210,9 @@
     <string name="progress_import_invalid">Не удалось прочитать полную поддерживаемую копию. Данные не изменены.</string>
     <string name="progress_import_done">Совпало: %1$d · пропущено: %2$d · ошибки закладок: %3$d</string>
     <string name="progress_import_failed">Импорт прерван. Файлы глав не изменены; некоторые пустые закладки могли быть восстановлены. Повтори импорт той же копии.</string>
+    <string name="offline_storage_title">Офлайн-хранилище</string>
+    <string name="offline_storage_loading">Проверяем файлы глав…</string>
+    <string name="offline_storage_summary">Готово: %1$d · отсутствуют или пусты: %2$d · %3$s</string>
+    <string name="offline_storage_explanation">Учитываются только архивы скачанных и импортированных глав. Обложки, закладки, временные файлы и база данных не входят в размер. Проверяются наличие и размер файла, а не целостность всего архива. Ничего не удаляется.</string>
+    <string name="offline_storage_failed">Не удалось проверить офлайн-хранилище.</string>
 </resources>
