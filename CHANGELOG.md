@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.10 (candidate)
+
+- Add a local ZIP library backup with version-1 progress metadata, chapter archives and covers.
+- Preview and restore into an empty library only, validate archive hashes and bounds, stage files before committing metadata, refuse duplicate restores.
+- Preferences and pending download jobs remain excluded from restoration; real-device clean-install verification is required.
+
 ## 0.2.9
 
 - Add a read-only offline storage overview with local chapter archive sizes and missing/empty file counts, grouped by series and source.

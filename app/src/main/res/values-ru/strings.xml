@@ -215,4 +215,14 @@
     <string name="offline_storage_summary">Готово: %1$d · отсутствуют или пусты: %2$d · %3$s</string>
     <string name="offline_storage_explanation">Учитываются только архивы скачанных и импортированных глав. Обложки, закладки, временные файлы и база данных не входят в размер. Проверяются наличие и размер файла, а не целостность всего архива. Ничего не удаляется.</string>
     <string name="offline_storage_failed">Не удалось проверить офлайн-хранилище.</string>
+    <string name="library_backup_detail">Переносимый ZIP: библиотека, файлы глав, обложки, закладки и время чтения. Восстановление только в пустую библиотеку. Настройки и очередь не восстанавливаются. Храни ZIP в безопасном месте; большой библиотеке нужно свободное место.</string>
+    <string name="library_backup_export">Экспортировать библиотеку ZIP</string>
+    <string name="library_backup_import">Восстановить библиотеку ZIP</string>
+    <string name="library_backup_restore">Проверить и восстановить</string>
+    <string name="library_backup_working">Обрабатываем файлы библиотеки…</string>
+    <string name="library_backup_saved">ZIP библиотеки сохранён</string>
+    <string name="library_backup_failed">Не удалось закончить копирование. Не используй неполный ZIP. Текущая библиотека не изменена.</string>
+    <string name="library_backup_rejected">Восстановление не завершено. Нужны полная корректная копия, пустая библиотека и свободное место. Существующие главы не заменяются.</string>
+    <string name="library_backup_restored">Библиотека восстановлена. Вернись в библиотеку, чтобы читать.</string>
+    <string name="library_backup_preview">Серий: %1$d · глав: %2$d. Перед записью проверим файлы и хеши. Библиотека должна оставаться пустой. Настройки и очередь не восстанавливаются.</string>
 </resources>

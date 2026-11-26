@@ -15,7 +15,9 @@ public final class PreferencesActivity extends PanelumeActivity {
     static final String SETUP = "first_run";
     private static final int EXPORT_PROGRESS = 27;
     private static final int IMPORT_PROGRESS = 28;
+    private static final int EXPORT_LIBRARY = 29, IMPORT_LIBRARY = 30;
     private boolean importing;
+    private boolean libraryBusy;
     private boolean storageLoading;
     private boolean setup;
     private int step;
@@ -78,6 +80,12 @@ public final class PreferencesActivity extends PanelumeActivity {
             Ui.add(page, Ui.button(this, getString(R.string.progress_export), false, this::chooseExport), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 8);
             Ui.add(page, Ui.button(this, getString(R.string.progress_import), false, this::chooseImport), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 14);
+            Ui.add(page, Ui.label(this, getString(R.string.library_backup_detail), 13, Ui.MUTED), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 8);
+            Ui.add(page, Ui.button(this, getString(R.string.library_backup_export), false, () -> chooseLibrary(false)), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 8);
+            Ui.add(page, Ui.button(this, getString(R.string.library_backup_import), false, () -> chooseLibrary(true)), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 25);
             Ui.add(page, Ui.title(this, getString(R.string.open_metrics_title), 26), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 8);
@@ -195,6 +203,11 @@ public final class PreferencesActivity extends PanelumeActivity {
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (result != RESULT_OK || data == null || data.getData() == null) return;
+        if (request == EXPORT_LIBRARY || request == IMPORT_LIBRARY) {
+            if (request == EXPORT_LIBRARY) exportLibrary(data.getData());
+            else previewLibrary(data.getData());
+            return;
+        }
         if (request == IMPORT_PROGRESS) {
             previewImport(data.getData());
             return;
@@ -216,8 +229,92 @@ public final class PreferencesActivity extends PanelumeActivity {
         }, "panelume-progress-export").start();
     }
 
+    private void chooseLibrary(boolean restore) {
+        if (libraryBusy || importing) return;
+        Intent intent = new Intent(restore ? Intent.ACTION_OPEN_DOCUMENT : Intent.ACTION_CREATE_DOCUMENT)
+            .addCategory(Intent.CATEGORY_OPENABLE).setType("application/zip");
+        if (!restore) intent.putExtra(Intent.EXTRA_TITLE, "panelume-library-" + java.time.LocalDate.now() + ".zip");
+        try {
+            startActivityForResult(intent, restore ? IMPORT_LIBRARY : EXPORT_LIBRARY);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.no_picker, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void exportLibrary(Uri uri) {
+        if (libraryBusy || importing) return;
+        libraryBusy = true;
+        android.content.Context context = getApplicationContext();
+        Toast.makeText(this, R.string.library_backup_working, Toast.LENGTH_LONG).show();
+        new Thread(() -> {
+            int message = R.string.library_backup_saved;
+            try (java.io.OutputStream out = context.getContentResolver().openOutputStream(uri, "wt")) {
+                if (out == null) throw new java.io.IOException("No destination");
+                LibraryBackup.write(context, ShelfDb.get(context), out);
+            } catch (java.io.IOException | RuntimeException error) {
+                message = R.string.library_backup_failed;
+            }
+            final int done = message;
+            runOnUiThread(() -> {
+                libraryBusy = false;
+                if (!isFinishing() && !isDestroyed()) Toast.makeText(this, done, Toast.LENGTH_LONG).show();
+            });
+        }, "panelume-library-export").start();
+    }
+
+    private void previewLibrary(Uri uri) {
+        if (libraryBusy || importing) return;
+        libraryBusy = true;
+        android.content.Context context = getApplicationContext();
+        new Thread(() -> {
+            try {
+                if (!LibraryBackup.empty(ShelfDb.get(context))) throw new java.io.IOException("Library not empty");
+                LibraryBackup.Preview preview;
+                try (java.io.InputStream in = context.getContentResolver().openInputStream(uri)) {
+                    if (in == null) throw new java.io.IOException("No input");
+                    preview = LibraryBackup.preview(in);
+                }
+                runOnUiThread(() -> {
+                    libraryBusy = false;
+                    if (isFinishing() || isDestroyed()) return;
+                    new android.app.AlertDialog.Builder(this).setTitle(R.string.library_backup_import)
+                        .setMessage(getString(R.string.library_backup_preview, preview.series, preview.chapters))
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.library_backup_restore, (dialog, which) -> restoreLibrary(uri, preview))
+                        .show();
+                });
+            } catch (java.io.IOException | RuntimeException error) {
+                runOnUiThread(() -> {
+                    libraryBusy = false;
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this, R.string.library_backup_rejected, Toast.LENGTH_LONG).show();
+                });
+            }
+        }, "panelume-library-preview").start();
+    }
+
+    private void restoreLibrary(Uri uri, LibraryBackup.Preview preview) {
+        if (libraryBusy || importing) return;
+        libraryBusy = true;
+        android.content.Context context = getApplicationContext();
+        Toast.makeText(this, R.string.library_backup_working, Toast.LENGTH_LONG).show();
+        new Thread(() -> {
+            int message = R.string.library_backup_restored;
+            try (java.io.InputStream in = context.getContentResolver().openInputStream(uri)) {
+                if (in == null) throw new java.io.IOException("No input");
+                LibraryBackup.restore(ShelfDb.get(context), in, preview);
+            } catch (java.io.IOException | RuntimeException error) {
+                message = R.string.library_backup_rejected;
+            }
+            final int done = message;
+            runOnUiThread(() -> {
+                libraryBusy = false;
+                if (!isFinishing() && !isDestroyed()) Toast.makeText(this, done, Toast.LENGTH_LONG).show();
+            });
+        }, "panelume-library-restore").start();
+    }
+
     private void chooseImport() {
-        if (importing) return;
+        if (importing || libraryBusy) return;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
             .setType("application/json");
         try {
@@ -228,7 +325,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void previewImport(Uri uri) {
-        if (importing) return;
+        if (importing || libraryBusy) return;
         importing = true;
         android.content.Context context = getApplicationContext();
         new Thread(() -> {
@@ -255,7 +352,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void applyImport(ProgressRestore.Backup backup) {
-        if (importing) return;
+        if (importing || libraryBusy) return;
         importing = true;
         android.content.Context context = getApplicationContext();
         new Thread(() -> {
