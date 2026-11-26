@@ -2,7 +2,7 @@
 
 Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and comics. The work below focuses on getting into a chapter quickly, reading offline and returning to the same spot.
 
-## Available now — 0.2.7
+## Available now — 0.2.8
 
 - Continuous vertical reading with bookmarks and a Continue Reading card.
 - Pinch-to-zoom, double-tap reset, and panning; the 0.2.6 hotfix separates the stable base image cache from detail rendering.
@@ -19,10 +19,15 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Local timing of first visible panel (local, cached, network); collect actual pilot samples before choosing streaming work.
 - Read-only JSON progress export; files are excluded. Restore and merge remain a separate gated task.
 
-## 0.2.8 candidate — conservative progress import
+## 0.2.8 shipped — conservative progress import
 
 - Validate version 1 exports, preview matches/skips, merge only identical chapter files already present. Existing valid bookmarks are retained; per-day time and read state use max for idempotent imports. No chapter or settings replacement.
 - Clean-install reconstruction, offline-file transfer, settings import and device testing remain open.
+
+## 0.2.9 candidate — offline storage overview
+
+- Report chapter archive sizes and missing or empty files by series. No deletion, repair, or full archive validation yet.
+- Record device and pilot scenarios in [testing/pilot.md](docs/testing/pilot.md); no device results claimed.
 
 ## Priorities
 

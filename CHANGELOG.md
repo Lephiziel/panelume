@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.2.8 (candidate)
+## 0.2.9 (candidate)
+
+- Add a read-only offline storage overview with local chapter archive sizes and missing/empty file counts, grouped by series and source.
+- Add isolated tests for missing, empty and present chapter archives; no deletion or data-schema change.
+- Document repeatable device upgrade, reading, offline and pilot scenarios.
+
+## 0.2.8
 
 - Preview and merge v1 progress exports into existing identical chapter files without replacing valid bookmarks.
 - Merge read status and daily reading time monotonically using max, avoiding duplicate imports.

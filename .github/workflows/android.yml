@@ -1,6 +1,10 @@
 name: Android build
 on: [push, pull_request]
 
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -25,12 +29,20 @@ jobs:
           gradle-version: '8.9'
       - name: Test catalogue fixtures, queue recovery and progress export
         run: gradle --no-daemon :app:testDebugUnitTest
+      - name: Upload regression test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: panelume-test-reports
+          path: app/build/test-results/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Build and verify APK
         run: ./tools/build-apk.sh
       - name: Upload APK for release signing
         uses: actions/upload-artifact@v4
         with:
-          name: panelume-0.2.8-ci-apk
-          path: out/Panelume-0.2.8.apk
+          name: panelume-0.2.9-ci-apk
+          path: out/Panelume-0.2.9.apk
           if-no-files-found: error
           retention-days: 7
