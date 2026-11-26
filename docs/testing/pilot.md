@@ -32,3 +32,7 @@ Do not infer installations from APK download counts. Revisit the streaming proto
 ## Paired opening-performance experiment (0.3.0)
 
 Compare 0.2.13 and 0.3.0 on separate disposable profiles with the same device, chapter, page count, network and source. Never downgrade a populated installation. Record at least 10 attempts per version and opening type, including failed attempts and bytes transferred. Alternate versions or use matching network conditions; distinguish cached, local and newly downloaded chapters. Report median latency for successful attempts, success fraction and range; do not infer a speedup from CI or combine different sources. The app shows a rolling median of up to 20 successful openings per type for 0.3.0; older last-only metrics are not included. No measurements yet.
+
+## Tile prefetch comparison (0.3.1)
+
+Compare 0.3.0 and 0.3.1 using identical long CBZ and PDF chapters on disposable profiles. Observe blank-tile time, frame timing, peak memory and scroll/zoom/rotation behavior during the same slow-scroll and fast-fling sequences. Test a malformed image and rapid direction changes. A single speculative decode can finish before a newly visible tile; no extra worker is created. Record actual results before claiming improved smoothness. No device results yet.

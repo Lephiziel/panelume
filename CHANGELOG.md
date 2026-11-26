@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 (candidate)
+
+- Bounded ahead-of-viewport tile prefetch while reading an already-open chapter.
+- Separate 4 MiB speculative cache, foreground priority between tile jobs, no speculative work while pinching, scrolling by touch or flinging.
+- Reset version-specific opening latency sample window. No database or backup migration.
+
 ## 0.3.0 (preview)
 
 - Compute online CBZ SHA-256 during archive writing, avoiding a separate full-file read before inspection.
