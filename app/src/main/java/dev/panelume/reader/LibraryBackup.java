@@ -78,7 +78,9 @@ final class LibraryBackup {
         try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(input))) {
             byte[] metadata = readMetadata(zip);
             Model model = model(metadata);
-            return new Preview(model.series.length(),model.chapters.size(),hash(metadata),model.settings);
+            int missing=0;
+            for (Chapter chapter:model.chapters) if (!chapter.present) missing++;
+            return new Preview(model.series.length(),model.chapters.size(),missing,hash(metadata),model.settings);
         }
     }
 
@@ -297,11 +299,11 @@ final class LibraryBackup {
     }
 
     static final class Preview {
-        final int series,chapters;
+        final int series,chapters,missing;
         final String metadataHash;
         final BackupSettings settings;
-        Preview(int series,int chapters,String metadataHash,BackupSettings settings) {
-            this.series=series; this.chapters=chapters; this.metadataHash=metadataHash; this.settings=settings;
+        Preview(int series,int chapters,int missing,String metadataHash,BackupSettings settings) {
+            this.series=series; this.chapters=chapters; this.missing=missing; this.metadataHash=metadataHash; this.settings=settings;
         }
     }
     private static final class Budget { long bytes; }

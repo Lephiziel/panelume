@@ -238,4 +238,5 @@
     <string name="offline_redownload_unavailable">Chapter is not available in the current catalogue. Your progress is retained.</string>
     <string name="offline_chapter_changed">Chapter page count or format changed. Existing progress is retained; automatic replacement stopped.</string>
     <string name="offline_missing_local">Local file missing</string>
+    <string name="library_backup_missing">Chapters with progress only: %1$d. Their files must be downloaded again before reading.</string>
 </resources>

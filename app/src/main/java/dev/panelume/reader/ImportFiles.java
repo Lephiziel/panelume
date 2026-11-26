@@ -239,7 +239,14 @@ final class ImportFiles {
             committed = true;
             return result;
         } finally {
+            boolean referenced = true;
             if (!committed) {
+                // Commit acknowledgement can fail after the database has accepted the directory.
+                // Keep it if the reference exists or cannot be checked.
+                try { referenced = db.hasDirectory(directory); }
+                catch (RuntimeException uncertain) { /* retain */ }
+            }
+            if (!committed && !referenced) {
                 if (content.isFile() && !content.renameTo(staged.file)) {
                     // Keep the copy in place for orphan cleanup if a rollback cannot restore it.
                     content = null;

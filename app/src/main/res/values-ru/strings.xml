@@ -240,4 +240,5 @@
     <string name="offline_redownload_unavailable">Главы нет в текущем каталоге. Прогресс сохранён.</string>
     <string name="offline_chapter_changed">Изменилось количество страниц или формат главы. Прогресс сохранён; автоматическая замена остановлена.</string>
     <string name="offline_missing_local">Локальный файл отсутствует</string>
+    <string name="library_backup_missing">Глав без скачанных файлов: %1$d. Для чтения их нужно скачать повторно; прогресс сохраняется.</string>
 </resources>
