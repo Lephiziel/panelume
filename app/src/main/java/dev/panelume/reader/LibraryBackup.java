@@ -259,9 +259,16 @@ final class LibraryBackup {
                     throw new IOException("Invalid catalogue chapter");
                 }
                 String number=row.getString("number_text");
+                String normalized;
+                try { normalized=Names.normalizeNumber(number); }
+                catch (IllegalArgumentException special) {
+                    if (provider.isEmpty()) throw new IOException("Invalid local chapter number",special);
+                    normalized="";
+                }
                 if (row.isNull("number")) {
-                    if (!number.isEmpty()) throw new IOException("Invalid chapter number");
-                } else if (!Double.isFinite(row.getDouble("number")) || number.isEmpty() || Double.parseDouble(number)!=row.getDouble("number")) {
+                    if (!normalized.isEmpty()) throw new IOException("Missing numeric chapter number");
+                } else if (!Double.isFinite(row.getDouble("number")) || normalized.isEmpty()
+                    || Double.parseDouble(normalized)!=row.getDouble("number")) {
                     throw new IOException("Invalid chapter number");
                 }
                 row.getString("source"); row.getString("caption"); row.getString("credit");

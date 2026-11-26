@@ -80,6 +80,35 @@ public final class LibraryBackupTest {
             assertEquals(0,dest.shelf.root.list().length);
         }
     }
+    @Test public void catalogueSpecialChapterSurvivesTransfer() throws Exception {
+        Context context=RuntimeEnvironment.getApplication();
+        try (TestShelf source=new TestShelf(context);TestShelf dest=new TestShelf(context)) {
+            CatalogQueue queue=new CatalogQueue(source.shelf);
+            CatalogSource.Title title=new CatalogSource.Title("xkcd","fixture","Catalogue fixture","https://xkcd.com/","","");
+            CatalogSource.Episode episode=new CatalogSource.Episode("special","Extra","Extra","https://xkcd.com/1/","",false);
+            long series=queue.enqueue(title,Collections.singletonList(episode),false);
+            CatalogQueue.Job job=queue.next(true);
+            assertNotNull(job);
+            String directory="22222222-2222-2222-2222-222222222222";
+            File folder=new File(source.shelf.root,directory); assertTrue(folder.mkdirs());
+            File archive=new File(folder,"chapter.cbz"); put(archive,ARCHIVE);
+            put(new File(folder,"cover.jpg"),COVER);
+            ImportFiles.Staged staged=new ImportFiles.Staged(archive,"fixture.cbz","cbz",LibraryBackup.hash(ARCHIVE),10,
+                "Catalogue fixture","","",COVER);
+            long id=queue.save(job,staged,directory);
+            source.shelf.opened(id);
+            ByteArrayOutputStream out=new ByteArrayOutputStream();
+            LibraryBackup.write(context,source.shelf,out);
+            byte[] zip=out.toByteArray();
+            LibraryBackup.restore(dest.shelf,new ByteArrayInputStream(zip),LibraryBackup.preview(new ByteArrayInputStream(zip)));
+            ShelfDb.Chapter chapter=dest.shelf.lastOpened();
+            assertEquals("Extra",chapter.number);
+            assertEquals("special",chapter.catalogId);
+            assertEquals("xkcd",chapter.provider);
+            assertEquals(1,dest.shelf.chapters(series).size());
+        }
+    }
+
     @Test public void unexpectedEntryRejectedWithoutExtraction() throws Exception {
         ByteArrayOutputStream bytes=new ByteArrayOutputStream();
         try (ZipOutputStream out=new ZipOutputStream(bytes)) {
