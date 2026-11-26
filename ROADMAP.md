@@ -54,11 +54,11 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Remove only confirmed file identities; skip changed entries, reject active readers/downloads, protect local imports and report partial results.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.2.13): 26 regression tests passed. Real-device storage and recovery testing remains open. Latest stable remains 0.2.9. Next: first-panel performance and pilot measurements before streaming.
 
-## 0.3.0 candidate — opening performance
+## 0.3.0 preview — opening performance
 
 - Hash completed online chapter ZIP bytes while writing, including the central directory, rather than reopening the whole file for a separate SHA-256 pass. Keep archive/image inspection and durable sync.
 - Show last and median successful first-panel latency over up to 20 samples per opening type, local to the device and scoped to this build. No speedup is claimed before measured comparisons.
-- Next: collect paired baseline/candidate measurements and live catalogue checks; evaluate bounded prefetch or streaming only after identifying bottlenecks. Device recovery and upgrade gates remain open.
+- [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.0): 29 regression tests passed. Latest stable remains 0.2.9. Next: collect paired baseline/candidate measurements and live catalogue checks; evaluate bounded prefetch or streaming only after identifying bottlenecks. Device recovery and upgrade gates remain open.
 
 ## Priorities
 

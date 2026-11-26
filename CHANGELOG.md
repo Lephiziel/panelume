@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (candidate)
+## 0.3.0 (preview)
 
 - Compute online CBZ SHA-256 during archive writing, avoiding a separate full-file read before inspection.
 - Keep existing image/ZIP validation, size limits and disk sync before registration.
