@@ -1,0 +1,64 @@
+name: Publish Panelume 0.2.13 APK
+on:
+  push:
+    branches:
+      - release/panelume-0.2.13
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: panelume-0.2.13-ci-apk
+          path: out
+          github-token: ${{ github.token }}
+          run-id: 45866446804
+      - name: Reconstruct privately signed APK and verify checksum
+        run: |
+          set -euo pipefail
+          echo "410da604a68f0d817af00ad4a249a2be733466e56540085ce28b68e26cee7bf1  out/Panelume-0.2.13.apk" | sha256sum -c
+          python3 - <<'PY'
+          import base64, zlib
+          from pathlib import Path
+          encoded = Path(".github/release/0.2.13-signature.patch.zlib.b64").read_text().strip()
+          Path("/tmp/panelume-0213.patch").write_bytes(zlib.decompress(base64.b64decode(encoded)))
+          PY
+          cp out/Panelume-0.2.13.apk app.apk
+          git apply --binary /tmp/panelume-0213.patch
+          echo "336c4b4d03346930738540a4333f879055fe99668d1a335c65924438900f8647  app.apk" | sha256sum -c
+          mv -f app.apk out/Panelume-0.2.13.apk
+      - name: Verify original certificate and Android package identity
+        run: |
+          set -euo pipefail
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          if [[ ! -x "$tools/apksigner" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"
+          fi
+          "$tools/apksigner" verify --verbose --print-certs out/Panelume-0.2.13.apk | tee /tmp/apksigner-check.txt
+          grep -F "Signer #1 certificate SHA-256 digest: e71850cc090b48c0f70c9af1aeb0f8a123c128b423aa008fd46861337f1cfec9" /tmp/apksigner-check.txt
+          "$tools/aapt2" dump badging out/Panelume-0.2.13.apk | tee /tmp/panelume-badging.txt
+          grep -E "^package: name='dev.panelume.reader.next' versionCode='15' versionName='0.2.13'" /tmp/panelume-badging.txt
+      - name: Publish verified release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.2.13 --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release already exists; refusing to overwrite."
+            exit 1
+          fi
+          cp out/Panelume-0.2.13.apk out/Panelume.apk
+          (cd out && sha256sum Panelume-0.2.13.apk Panelume.apk > SHA256SUMS.txt)
+          gh release create v0.2.13 out/Panelume-0.2.13.apk out/Panelume.apk out/SHA256SUMS.txt \
+            --repo "${{ github.repository }}" \
+            --target f5468ecf8a1a925cc372a36f797a24f33a5e6d94 \
+            --prerelease --latest=false \
+            --title "Panelume 0.2.13 — Offline storage manager (preview)" \
+            --notes "Adds per-series offline storage management, sorted by archive size, with completed-only selection by default and explicit confirmation. Removes only confirmed chapter archives, protects local imports, open reader files and active download jobs, and reports actual removed archive bytes and partial failures. Twenty-six regression tests passed. Original certificate, app ID and database schema preserved. Physical-device checks remain open. Latest stable remains 0.2.9. Do not uninstall a current library to test this release; Android does not allow an ordinary in-place downgrade from versionCode 15."
