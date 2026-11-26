@@ -60,7 +60,7 @@ final class ReaderCanvas extends View {
     private final LruCache<Long, Bitmap> ahead = new LruCache<Long, Bitmap>(PREFETCH_BYTES) {
         @Override protected int sizeOf(Long key, Bitmap value) { return value.getAllocationByteCount(); }
     };
-    private final Set<Long> prefetchFailed = new HashSet<>();
+    private final Set<Long> prefetchFailed = new java.util.LinkedHashSet<>();
     private final Set<Long> failed = new HashSet<>();
     private final Set<Long> detailFailed = new HashSet<>();
     private final double[] starts;
@@ -301,23 +301,10 @@ final class ReaderCanvas extends View {
     private void prefetch(double bottomY) {
         if (bottomY >= storyHeight()) return;
         int page = pageAt(bottomY);
-        int height = document.heightAtWidth(page, bitmapWidth);
-        int top = PrefetchTiles.firstUnseen((bottomY - starts[page]) / scale, TILE_HEIGHT);
-        // Inspect at most two fully offscreen tiles, including across page boundaries.
-        for (int count=0;count<PrefetchTiles.LIMIT;count++) {
-            if (top >= height) {
-                if (++page >= document.pages.length) return;
-                top=0;
-                height=document.heightAtWidth(page,bitmapWidth);
-            }
-            long k=key(page,top);
-            if (cache.get(k)==null && ahead.get(k)==null && !failed.contains(k)
-                && !prefetchFailed.contains(k)) {
-                queue(page,top,false,true);
-                return;
-            }
-            top+=TILE_HEIGHT;
-        }
+        long next = PrefetchTiles.next(page,(bottomY-starts[page])/scale,document.pages.length,TILE_HEIGHT,
+            index->document.heightAtWidth(index,bitmapWidth),
+            k->cache.get(k)==null && ahead.get(k)==null && !failed.contains(k) && !prefetchFailed.contains(k));
+        if (next>=0) queue((int)(next>>>32),(int)next,false,true);
     }
 
     private long key(int page, int top) {
@@ -362,7 +349,10 @@ final class ReaderCanvas extends View {
                 if (!released && generation==geometryGeneration && baseWidth == bitmapWidth) {
                     if (speculative) {
                         // A speculative failure is not a visible failure. Retry on demand.
-                        if (result==null) prefetchFailed.add(key);
+                        if (result==null) {
+                            if (prefetchFailed.size()>=64) prefetchFailed.remove(prefetchFailed.iterator().next());
+                            prefetchFailed.add(key);
+                        }
                         else ahead.put(key,result);
                     } else if (detail) {
                         if (result == null) detailFailed.add(key);
@@ -462,6 +452,13 @@ final class ReaderCanvas extends View {
             postInvalidateOnAnimation();
         }
         return true;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean focused) {
+        super.onWindowFocusChanged(focused);
+        if (!focused) { touching=false; multiTouch=false; }
+        else if (!released) invalidate();
     }
 
     @Override
