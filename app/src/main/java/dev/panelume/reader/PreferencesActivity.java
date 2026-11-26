@@ -158,7 +158,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void showStorage() {
-        if (importing || storageLoading) return;
+        if (importing || libraryBusy || storageLoading) return;
         storageLoading = true;
         Toast.makeText(this, R.string.offline_storage_loading, Toast.LENGTH_SHORT).show();
         android.content.Context context = getApplicationContext();
@@ -167,26 +167,118 @@ public final class PreferencesActivity extends PanelumeActivity {
                 OfflineStorage.Report report = OfflineStorage.scan(ShelfDb.get(context));
                 runOnUiThread(() -> {
                     storageLoading = false;
-                    if (isFinishing() || isDestroyed()) return;
-                    StringBuilder message = new StringBuilder(getString(R.string.offline_storage_summary,
-                        report.ready, report.missing, android.text.format.Formatter.formatFileSize(this, report.bytes)));
-                    message.append("\n\n").append(getString(R.string.offline_storage_explanation));
-                    for (OfflineStorage.Entry entry : report.series) {
-                        message.append("\n\n").append(entry.title);
-                        if (!entry.provider.isEmpty()) message.append(" · ").append(CatalogSource.label(entry.provider));
-                        message.append("\n").append(getString(R.string.offline_storage_summary,
-                            entry.ready, entry.missing, android.text.format.Formatter.formatFileSize(this, entry.bytes)));
-                    }
-                    new android.app.AlertDialog.Builder(this).setTitle(R.string.offline_storage_title)
-                        .setMessage(message.toString()).setPositiveButton(android.R.string.ok, null).show();
+                    if (!isFinishing() && !isDestroyed()) storageDialog(report);
                 });
             } catch (RuntimeException error) {
                 runOnUiThread(() -> {
                     storageLoading = false;
-                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this, R.string.offline_storage_failed, Toast.LENGTH_LONG).show();
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this,R.string.offline_storage_failed,Toast.LENGTH_LONG).show();
                 });
             }
         }, "panelume-storage-report").start();
+    }
+
+    private String storageSize(long bytes) {
+        return android.text.format.Formatter.formatFileSize(this,bytes);
+    }
+
+    private void storageDialog(OfflineStorage.Report report) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        Ui.pad(content,20,12,20,8);
+        TextView summary = new TextView(this);
+        summary.setText(getString(R.string.offline_storage_summary,report.ready,report.missing,storageSize(report.bytes))
+            + "\n" + getString(R.string.offline_reclaimable,storageSize(report.reclaimable))
+            + "\n\n" + getString(R.string.offline_storage_explanation));
+        content.addView(summary);
+        android.widget.CheckBox readOnly = new android.widget.CheckBox(this);
+        readOnly.setText(R.string.offline_read_only);
+        readOnly.setChecked(true);
+        content.addView(readOnly);
+        java.util.List<android.widget.CheckBox> choices = new java.util.ArrayList<>();
+        for (OfflineStorage.Entry entry : report.series) {
+            TextView title = new TextView(this);
+            title.setText(entry.title + (entry.provider.isEmpty() ? "" : " · " + CatalogSource.label(entry.provider))
+                + "\n" + getString(R.string.offline_storage_summary,entry.ready,entry.missing,storageSize(entry.bytes)));
+            Ui.pad(title,0,12,0,2);
+            content.addView(title);
+            android.widget.CheckBox choice = new android.widget.CheckBox(this);
+            choice.setChecked(false);
+            choices.add(choice);
+            content.addView(choice);
+        }
+        TextView selectedText = new TextView(this);
+        Ui.pad(selectedText,0,12,0,0);
+        content.addView(selectedText);
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(content);
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.offline_storage_title).setView(scroll)
+            .setNegativeButton(android.R.string.cancel,null)
+            .setPositiveButton(R.string.offline_review,null).create();
+        Runnable refresh = () -> {
+            for (int i=0;i<choices.size();i++) {
+                long bytes=0; int count=0;
+                for (OfflineStorage.Candidate candidate : report.series.get(i).candidates) {
+                    if (readOnly.isChecked() && !candidate.done) continue;
+                    bytes+=candidate.bytes; count++;
+                }
+                android.widget.CheckBox choice=choices.get(i);
+                choice.setEnabled(count>0);
+                if (count==0) choice.setChecked(false);
+                choice.setText(getString(R.string.offline_select_series,count,storageSize(bytes)));
+            }
+            java.util.List<OfflineStorage.Candidate> selected=selectedArchives(report,choices,readOnly.isChecked());
+            long bytes=0; for (OfflineStorage.Candidate candidate:selected) bytes+=candidate.bytes;
+            selectedText.setText(getString(R.string.offline_selected,selected.size(),storageSize(bytes)));
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setEnabled(!selected.isEmpty());
+        };
+        dialog.setOnShowListener(ignored -> {
+            readOnly.setOnCheckedChangeListener((button,checked) -> refresh.run());
+            for (android.widget.CheckBox choice:choices) choice.setOnCheckedChangeListener((button,checked) -> refresh.run());
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                java.util.List<OfflineStorage.Candidate> selected=selectedArchives(report,choices,readOnly.isChecked());
+                if (selected.isEmpty()) return;
+                long bytes=0; for (OfflineStorage.Candidate candidate:selected) bytes+=candidate.bytes;
+                new android.app.AlertDialog.Builder(this).setTitle(R.string.offline_remove_selected)
+                    .setMessage(getString(R.string.offline_selected,selected.size(),storageSize(bytes))
+                        + "\n\n" + getString(R.string.offline_remove_detail))
+                    .setNegativeButton(R.string.cancel,null)
+                    .setPositiveButton(R.string.offline_remove_selected,(d,w) -> {
+                        dialog.dismiss();
+                        evictSelected(selected);
+                    }).show();
+            });
+            refresh.run();
+        });
+        dialog.show();
+    }
+
+    private java.util.List<OfflineStorage.Candidate> selectedArchives(OfflineStorage.Report report,
+        java.util.List<android.widget.CheckBox> choices,boolean readOnly) {
+        java.util.List<OfflineStorage.Candidate> selected=new java.util.ArrayList<>();
+        for (int i=0;i<choices.size();i++) if (choices.get(i).isChecked()) {
+            for (OfflineStorage.Candidate candidate:report.series.get(i).candidates)
+                if (!readOnly || candidate.done) selected.add(candidate);
+        }
+        return selected;
+    }
+
+    private void evictSelected(java.util.List<OfflineStorage.Candidate> selected) {
+        if (storageLoading || importing || libraryBusy) return;
+        storageLoading=true;
+        android.content.Context context=getApplicationContext();
+        new Thread(() -> {
+            OfflineStorage.Result result=OfflineStorage.evict(ShelfDb.get(context),selected);
+            runOnUiThread(() -> {
+                storageLoading=false;
+                if (isFinishing() || isDestroyed()) return;
+                new android.app.AlertDialog.Builder(this).setTitle(R.string.offline_storage_title)
+                    .setMessage(getString(R.string.offline_remove_result,result.removed,result.skipped,result.failed,storageSize(result.bytes)))
+                    .setPositiveButton(R.string.offline_refresh,(d,w)->showStorage())
+                    .setNegativeButton(android.R.string.ok,null).show();
+            });
+        },"panelume-storage-remove").start();
     }
 
     private void chooseExport() {
@@ -230,7 +322,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void chooseLibrary(boolean restore) {
-        if (libraryBusy || importing) return;
+        if (libraryBusy || importing || storageLoading) return;
         Intent intent = new Intent(restore ? Intent.ACTION_OPEN_DOCUMENT : Intent.ACTION_CREATE_DOCUMENT)
             .addCategory(Intent.CATEGORY_OPENABLE).setType("application/zip");
         if (!restore) intent.putExtra(Intent.EXTRA_TITLE, "panelume-library-" + java.time.LocalDate.now() + ".zip");
@@ -242,7 +334,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void exportLibrary(Uri uri) {
-        if (libraryBusy || importing) return;
+        if (libraryBusy || importing || storageLoading) return;
         libraryBusy = true;
         android.content.Context context = getApplicationContext();
         Toast.makeText(this, R.string.library_backup_working, Toast.LENGTH_LONG).show();
@@ -263,7 +355,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void previewLibrary(Uri uri) {
-        if (libraryBusy || importing) return;
+        if (libraryBusy || importing || storageLoading) return;
         libraryBusy = true;
         android.content.Context context = getApplicationContext();
         new Thread(() -> {
@@ -337,7 +429,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void restoreLibrary(Uri uri, LibraryBackup.Preview preview, int selected) {
-        if (libraryBusy || importing) return;
+        if (libraryBusy || importing || storageLoading) return;
         libraryBusy = true;
         android.content.Context context = getApplicationContext();
         Toast.makeText(this, R.string.library_backup_working, Toast.LENGTH_LONG).show();
@@ -365,7 +457,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void chooseImport() {
-        if (importing || libraryBusy) return;
+        if (importing || libraryBusy || storageLoading) return;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
             .setType("application/json");
         try {
@@ -376,7 +468,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void previewImport(Uri uri) {
-        if (importing || libraryBusy) return;
+        if (importing || libraryBusy || storageLoading) return;
         importing = true;
         android.content.Context context = getApplicationContext();
         new Thread(() -> {
@@ -403,7 +495,7 @@ public final class PreferencesActivity extends PanelumeActivity {
     }
 
     private void applyImport(ProgressRestore.Backup backup) {
-        if (importing || libraryBusy) return;
+        if (importing || libraryBusy || storageLoading) return;
         importing = true;
         android.content.Context context = getApplicationContext();
         new Thread(() -> {

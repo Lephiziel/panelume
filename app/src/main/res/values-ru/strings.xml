@@ -213,7 +213,7 @@
     <string name="offline_storage_title">Офлайн-хранилище</string>
     <string name="offline_storage_loading">Проверяем файлы глав…</string>
     <string name="offline_storage_summary">Готово: %1$d · отсутствуют или пусты: %2$d · %3$s</string>
-    <string name="offline_storage_explanation">Учитываются только архивы скачанных и импортированных глав. Обложки, закладки, временные файлы и база данных не входят в размер. Проверяются наличие и размер файла, а не целостность всего архива. Ничего не удаляется.</string>
+    <string name="offline_storage_explanation">Учитываются только архивы скачанных и импортированных глав. Обложки, закладки, временные файлы и база данных не входят в размер. Проверяются наличие и размер файла, а не целостность всего архива. Файлы удаляются только после выбора и подтверждения. Локальные импорты защищены.</string>
     <string name="offline_storage_failed">Не удалось проверить офлайн-хранилище.</string>
     <string name="library_backup_detail">Переносимый ZIP: библиотека, имеющиеся файлы глав, обложки, закладки и время чтения. Для нескачанных глав сохраняются метаданные. Восстановление только в пустую библиотеку. Можно выбрать настройки для восстановления; очередь не переносится. Храни ZIP в безопасном месте; большой библиотеке нужно свободное место.</string>
     <string name="library_backup_export">Экспортировать библиотеку ZIP</string>
@@ -241,4 +241,12 @@
     <string name="offline_chapter_changed">Изменилось количество страниц или формат главы. Прогресс сохранён; автоматическая замена остановлена.</string>
     <string name="offline_missing_local">Локальный файл отсутствует</string>
     <string name="library_backup_missing">Глав без скачанных файлов: %1$d. Для чтения их нужно скачать повторно; прогресс сохраняется.</string>
+    <string name="offline_reclaimable">Объём архивов из каталогов: %1$s</string>
+    <string name="offline_read_only">Только прочитанные главы (рекомендуется)</string>
+    <string name="offline_select_series">Выбрать файлов: %1$d · %2$s</string>
+    <string name="offline_selected">Выбрано файлов: %1$d · примерно %2$s</string>
+    <string name="offline_review">Проверить выбор</string>
+    <string name="offline_remove_selected">Удалить выбранные загрузки</string>
+    <string name="offline_remove_result">Удалено: %1$d · изменились/пропущены: %2$d · ошибки: %3$d. Удалено архивов на %4$s. История чтения сохранена.</string>
+    <string name="offline_refresh">Обновить хранилище</string>
 </resources>

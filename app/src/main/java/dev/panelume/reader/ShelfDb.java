@@ -24,6 +24,7 @@ final class ShelfDb extends SQLiteOpenHelper {
             + " FROM chapters c JOIN series s ON s.id=c.series_id";
 
     final File root;
+    private final Map<Long,Integer> readers = new HashMap<>();
 
     static synchronized ShelfDb get(Context context) {
         if (instance == null) instance = new ShelfDb(context.getApplicationContext());
@@ -275,11 +276,35 @@ final class ShelfDb extends SQLiteOpenHelper {
     }
 
     // Only online chapters can be evicted. The row, cover and position remain.
-    void evict(long id) throws IOException {
+    synchronized Chapter acquireReader(long id) {
+        Chapter chapter = chapter(id);
+        if (chapter != null) readers.put(id,readers.getOrDefault(id,0)+1);
+        return chapter;
+    }
+
+    synchronized void releaseReader(long id) {
+        int count = readers.getOrDefault(id,0);
+        if (count<=1) readers.remove(id);
+        else readers.put(id,count-1);
+    }
+
+    synchronized void evict(long id) throws IOException {
+        if (evictChecked(id,null)<=0) throw new Fault(R.string.offline_remove_failed);
+    }
+
+    synchronized long evictSnapshot(OfflineStorage.Candidate candidate) throws IOException {
+        return evictChecked(candidate.id,candidate);
+    }
+
+    private long evictChecked(long id, OfflineStorage.Candidate candidate) throws IOException {
+        if (readers.containsKey(id)) throw new Fault(R.string.offline_remove_failed);
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransactionNonExclusive();
         try {
             Chapter chapter = chapter(id);
+            if (candidate != null && (chapter == null || chapter.seriesId!=candidate.seriesId
+                || !chapter.directory.equals(candidate.directory) || !chapter.format.equals(candidate.format)
+                || chapter.done!=candidate.done)) return 0;
             if (chapter == null || chapter.provider.isEmpty() || chapter.catalogId.isEmpty()
                 || CatalogSource.named(chapter.provider) == null) throw new Fault(R.string.offline_remove_failed);
             try (Cursor cursor = db.rawQuery("SELECT 1 FROM downloads WHERE series_id=? AND episode_id=?",
@@ -287,8 +312,12 @@ final class ShelfDb extends SQLiteOpenHelper {
                 if (cursor.moveToFirst()) throw new Fault(R.string.offline_remove_failed);
             }
             File file = OfflineStorage.archive(root,chapter.directory,chapter.format);
-            if (file == null || !file.isFile() || !file.delete()) throw new Fault(R.string.offline_remove_failed);
+            if (file == null) throw new Fault(R.string.offline_remove_failed);
+            long bytes = file.isFile() ? file.length() : 0;
+            if (candidate != null && bytes!=candidate.bytes) return 0;
+            if (bytes<=0 || !file.delete()) throw new Fault(R.string.offline_remove_failed);
             db.setTransactionSuccessful();
+            return bytes;
         } finally { db.endTransaction(); }
     }
 

@@ -211,7 +211,7 @@
     <string name="offline_storage_title">Offline storage</string>
     <string name="offline_storage_loading">Checking local chapter files…</string>
     <string name="offline_storage_summary">Ready: %1$d · missing or empty: %2$d · %3$s</string>
-    <string name="offline_storage_explanation">Counts downloaded and imported chapter archives only. Covers, bookmarks, temporary files and the database are excluded. This report checks file presence and size, not full archive integrity. Nothing is deleted.</string>
+    <string name="offline_storage_explanation">Counts downloaded and imported chapter archives only. Covers, bookmarks, temporary files and the database are excluded. This report checks file presence and size, not full archive integrity. Files are removed only after selection and confirmation. Local imports are protected.</string>
     <string name="offline_storage_failed">Could not check offline storage.</string>
     <string name="library_backup_detail">Portable ZIP: library metadata, available chapter files, covers, bookmarks and reading time. Chapters without downloads retain metadata only. Restore only to an empty library. Selected settings can be restored; pending download jobs are excluded. Keep the ZIP private; large libraries need enough free space.</string>
     <string name="library_backup_export">Export library ZIP</string>
@@ -239,4 +239,12 @@
     <string name="offline_chapter_changed">Chapter page count or format changed. Existing progress is retained; automatic replacement stopped.</string>
     <string name="offline_missing_local">Local file missing</string>
     <string name="library_backup_missing">Chapters with progress only: %1$d. Their files must be downloaded again before reading.</string>
+    <string name="offline_reclaimable">Catalogue archive bytes: %1$s</string>
+    <string name="offline_read_only">Completed chapters only (recommended)</string>
+    <string name="offline_select_series">Select %1$d files · %2$s</string>
+    <string name="offline_selected">Selected: %1$d files · estimated %2$s</string>
+    <string name="offline_review">Review removal</string>
+    <string name="offline_remove_selected">Remove selected downloads</string>
+    <string name="offline_remove_result">Removed: %1$d · changed/skipped: %2$d · failed: %3$d. Archive bytes removed: %4$s. Reading history is retained.</string>
+    <string name="offline_refresh">Refresh storage</string>
 </resources>

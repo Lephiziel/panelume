@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.13 (candidate)
+
+- Manage offline archive space by series, largest first, with optional completed-only selection and explicit confirmation.
+- Report actual archive bytes removed, skipped/changed entries and failures.
+- Protect local imports, open reader files and active downloads; preserve reading metadata. No schema migration.
+
 ## 0.2.12 (preview)
 
 - Remove a catalogue chapter download without removing its reading history, bookmark or cover.

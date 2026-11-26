@@ -107,6 +107,79 @@ public final class OfflineEvictionTest {
         }
     }
 
+    @Test public void bulkSelectionIsBoundToConfirmedArchivesAndProtectsReaders() throws Exception {
+        Context context=RuntimeEnvironment.getApplication();
+        try (TestShelf fixture=new TestShelf(context)) {
+            ShelfDb shelf=fixture.shelf;
+            CatalogQueue queue=new CatalogQueue(shelf);
+            long id=withProgress(shelf,queue);
+            ShelfDb.Chapter chapter=shelf.chapter(id);
+            OfflineStorage.Report report=OfflineStorage.scan(shelf);
+            assertEquals(3,report.reclaimable);
+            OfflineStorage.Candidate selected=report.series.get(0).candidates.get(0);
+            assertTrue(selected.done);
+            assertNotNull(shelf.acquireReader(id));
+            try {
+                OfflineStorage.Result blocked=OfflineStorage.evict(shelf,Collections.singletonList(selected));
+                assertEquals(1,blocked.failed);
+                assertTrue(chapter.available(shelf.root));
+            } finally { shelf.releaseReader(id); }
+            OfflineStorage.Result result=OfflineStorage.evict(shelf,java.util.Arrays.asList(selected,selected));
+            assertEquals(1,result.removed); assertEquals(3,result.bytes);
+            assertEquals(0,result.failed);
+            assertEquals(1200,shelf.chapter(id).ms);
+            assertEquals(3,Bookmark.read(chapter.bookmark(shelf.root)).page);
+            assertEquals(id,save(shelf,queue,10,new byte[]{9,8,7}));
+            OfflineStorage.Result stale=OfflineStorage.evict(shelf,Collections.singletonList(selected));
+            assertEquals(1,stale.skipped);
+            assertTrue(shelf.chapter(id).available(shelf.root));
+        }
+    }
+
+    @Test public void bulkPartialFailureDoesNotRemoveUnselectedOrLocalFiles() throws Exception {
+        Context context=RuntimeEnvironment.getApplication();
+        try (TestShelf fixture=new TestShelf(context)) {
+            ShelfDb shelf=fixture.shelf;
+            CatalogQueue queue=new CatalogQueue(shelf);
+            long id=withProgress(shelf,queue);
+            ShelfDb.Chapter original=shelf.chapter(id);
+            CatalogSource.Episode other=new CatalogSource.Episode("two","2","Two","https://xkcd.com/2/","",false);
+            CatalogSource.Episode third=new CatalogSource.Episode("three","3","Three","https://xkcd.com/3/","",false);
+            queue.enqueue(TITLE,java.util.Arrays.asList(other,third),false);
+            for (int i=0;i<2;i++) {
+                CatalogQueue.Job job=queue.next(true);
+                File temp=File.createTempFile("chapter",".cbz",shelf.root.getParentFile());
+                byte[] content=new byte[]{4,5,6,7};
+                try (FileOutputStream out=new FileOutputStream(temp)) { out.write(content); }
+                ImportFiles.Staged staged=new ImportFiles.Staged(temp,"fixture.cbz","cbz",LibraryBackup.hash(content),10,"Fixture","","",COVER);
+                ImportFiles.store(shelf,staged,directory->queue.save(job,staged,directory));
+            }
+            String localDir="11111111-1111-1111-1111-111111111111";
+            long local=shelf.addChapter("Local","1","","local.cbz",localDir,"local-digest","cbz",1);
+            ShelfDb.Chapter localChapter=shelf.chapters(local).get(0);
+            assertTrue(new File(shelf.root,localDir).mkdirs());
+            try (FileOutputStream out=new FileOutputStream(localChapter.file(shelf.root))) { out.write(new byte[50]); }
+            OfflineStorage.Report report=OfflineStorage.scan(shelf);
+            assertEquals(61,report.bytes); assertEquals(11,report.reclaimable);
+            assertEquals("Local",report.series.get(0).title);
+            assertTrue(report.series.get(0).candidates.isEmpty());
+            java.util.List<OfflineStorage.Candidate> candidates=report.series.get(1).candidates;
+            assertEquals(3,candidates.size());
+            OfflineStorage.Candidate first=candidates.get(0), second=candidates.get(1), unselected=candidates.get(2);
+            assertEquals(id,first.id);
+            assertNotNull(shelf.acquireReader(first.id));
+            try {
+                OfflineStorage.Result result=OfflineStorage.evict(shelf,java.util.Arrays.asList(first,second));
+                assertEquals(1,result.failed); assertEquals(1,result.removed); assertEquals(4,result.bytes);
+            } finally { shelf.releaseReader(first.id); }
+            assertTrue(original.available(shelf.root));
+            assertFalse(shelf.chapter(second.id).available(shelf.root));
+            assertTrue(shelf.chapter(unselected.id).available(shelf.root));
+            assertTrue(localChapter.available(shelf.root));
+            assertEquals(1200,shelf.chapter(id).ms);
+        }
+    }
+
     @Test public void localImportsCannotBeEvicted() throws Exception {
         Context context=RuntimeEnvironment.getApplication();
         try (TestShelf fixture=new TestShelf(context)) {
