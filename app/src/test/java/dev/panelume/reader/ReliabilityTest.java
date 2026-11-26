@@ -139,7 +139,8 @@ public final class ReliabilityTest {
 
     @Test public void queueRecoveryAndReadOnlyExport() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
-        ShelfDb shelf = ShelfDb.get(context);
+        try (TestShelf fixture = new TestShelf(context)) {
+            ShelfDb shelf = fixture.shelf;
         CatalogQueue queue = new CatalogQueue(shelf);
         CatalogSource.Title series = new CatalogSource.Title("xkcd","fixture-series","Fixture","https://xkcd.com/","","");
         CatalogSource.Episode episode = new CatalogSource.Episode("fixture-1","1","Chapter 1","https://xkcd.com/1/","",false);
@@ -172,5 +173,6 @@ public final class ReliabilityTest {
         assertEquals(1,shelf.chapters(local).size()); assertEquals(1,queue.jobs(seriesId).size());
         queue.cancel(active.id);
         assertTrue(queue.jobs(seriesId).isEmpty());
+        }
     }
 }

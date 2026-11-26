@@ -190,7 +190,7 @@
     <string name="open_selected_chapter">Open %1$s</string>
     <string name="opening_status">%1$s · %2$s</string>
     <string name="progress_export_title">Reading progress</string>
-    <string name="progress_export_detail">Save a JSON snapshot of your library, bookmarks, reading time and settings. Chapter files are not included. Import and restoration are not available yet. Keep the export private.</string>
+    <string name="progress_export_detail">Save a JSON snapshot of your library, bookmarks, reading time and settings. Chapter files are not included. Import merges progress for matching local chapter files only. Keep the export private.</string>
     <string name="progress_export">Export progress</string>
     <string name="progress_export_working">Exporting progress…</string>
     <string name="progress_export_success">Progress exported</string>
@@ -202,4 +202,10 @@
     <string name="open_metrics_network">New online chapter</string>
     <string name="open_metrics_value">%1$s: %2$.2f s</string>
     <string name="open_metrics_empty">%1$s: not measured</string>
+    <string name="progress_import">Import progress</string>
+    <string name="progress_merge">Merge progress</string>
+    <string name="progress_import_preview">Matching chapters: %1$d. Missing or different files: %2$d. No chapters or settings will be created, removed or replaced. Existing bookmarks stay untouched. Read status and daily reading time use the greater value, not the sum.</string>
+    <string name="progress_import_invalid">Could not read a complete supported progress backup. Nothing was changed.</string>
+    <string name="progress_import_done">Matched %1$d · skipped %2$d · bookmark errors %3$d</string>
+    <string name="progress_import_failed">Merge interrupted. Existing files are unchanged; some empty bookmarks may have been restored. Retry with the same backup.</string>
 </resources>

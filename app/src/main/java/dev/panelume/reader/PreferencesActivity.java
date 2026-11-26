@@ -14,6 +14,8 @@ import android.widget.TextView;
 public final class PreferencesActivity extends PanelumeActivity {
     static final String SETUP = "first_run";
     private static final int EXPORT_PROGRESS = 27;
+    private static final int IMPORT_PROGRESS = 28;
+    private boolean importing;
     private boolean setup;
     private int step;
 
@@ -71,6 +73,8 @@ public final class PreferencesActivity extends PanelumeActivity {
             Ui.add(page, Ui.label(this, getString(R.string.progress_export_detail), 14, Ui.MUTED), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 8);
             Ui.add(page, Ui.button(this, getString(R.string.progress_export), false, this::chooseExport), Ui.FILL, Ui.WRAP);
+            Ui.gap(page, 8);
+            Ui.add(page, Ui.button(this, getString(R.string.progress_import), false, this::chooseImport), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 25);
             Ui.add(page, Ui.title(this, getString(R.string.open_metrics_title), 26), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 8);
@@ -155,7 +159,12 @@ public final class PreferencesActivity extends PanelumeActivity {
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if (request != EXPORT_PROGRESS || result != RESULT_OK || data == null || data.getData() == null) return;
+        if (result != RESULT_OK || data == null || data.getData() == null) return;
+        if (request == IMPORT_PROGRESS) {
+            previewImport(data.getData());
+            return;
+        }
+        if (request != EXPORT_PROGRESS) return;
         Uri target = data.getData();
         android.content.Context context = getApplicationContext();
         Toast.makeText(this, R.string.progress_export_working, Toast.LENGTH_SHORT).show();
@@ -170,6 +179,65 @@ public final class PreferencesActivity extends PanelumeActivity {
             new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
                 Toast.makeText(Prefs.localized(context), done, Toast.LENGTH_LONG).show());
         }, "panelume-progress-export").start();
+    }
+
+    private void chooseImport() {
+        if (importing) return;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            .setType("application/json");
+        try {
+            startActivityForResult(intent, IMPORT_PROGRESS);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.no_picker, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void previewImport(Uri uri) {
+        if (importing) return;
+        importing = true;
+        android.content.Context context = getApplicationContext();
+        new Thread(() -> {
+            try {
+                ProgressRestore.Backup backup = ProgressRestore.read(context, uri);
+                ProgressRestore.Summary summary = ProgressRestore.preview(ShelfDb.get(context), backup);
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    importing = false;
+                    new android.app.AlertDialog.Builder(this)
+                        .setTitle(R.string.progress_import)
+                        .setMessage(getString(R.string.progress_import_preview, summary.matched, summary.skipped))
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.progress_merge, (dialog, which) -> applyImport(backup))
+                        .show();
+                });
+            } catch (java.io.IOException | RuntimeException error) {
+                runOnUiThread(() -> {
+                    importing = false;
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this, R.string.progress_import_invalid, Toast.LENGTH_LONG).show();
+                });
+            }
+        }, "panelume-import-preview").start();
+    }
+
+    private void applyImport(ProgressRestore.Backup backup) {
+        if (importing) return;
+        importing = true;
+        android.content.Context context = getApplicationContext();
+        new Thread(() -> {
+            try {
+                ProgressRestore.Summary summary = ProgressRestore.apply(ShelfDb.get(context), backup);
+                runOnUiThread(() -> {
+                    importing = false;
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this,
+                        getString(R.string.progress_import_done, summary.matched, summary.skipped, summary.positionFailures), Toast.LENGTH_LONG).show();
+                });
+            } catch (java.io.IOException | RuntimeException error) {
+                runOnUiThread(() -> {
+                    importing = false;
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this, R.string.progress_import_failed, Toast.LENGTH_LONG).show();
+                });
+            }
+        }, "panelume-import-merge").start();
     }
 
     private void advance() {

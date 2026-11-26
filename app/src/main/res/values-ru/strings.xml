@@ -192,7 +192,7 @@
     <string name="open_selected_chapter">Открыть: %1$s</string>
     <string name="opening_status">%1$s · %2$s</string>
     <string name="progress_export_title">Прогресс чтения</string>
-    <string name="progress_export_detail">Сохрани JSON-копию библиотеки, закладок, времени чтения и настроек. Файлы глав не входят в копию. Импорт и восстановление пока недоступны. Храни файл в безопасном месте.</string>
+    <string name="progress_export_detail">Сохрани JSON-копию библиотеки, закладок, времени чтения и настроек. Файлы глав не входят в копию. Импорт объединяет прогресс только для совпадающих локальных файлов глав. Храни файл в безопасном месте.</string>
     <string name="progress_export">Экспортировать прогресс</string>
     <string name="progress_export_working">Экспортируем прогресс…</string>
     <string name="progress_export_success">Прогресс экспортирован</string>
@@ -204,4 +204,10 @@
     <string name="open_metrics_network">Новая онлайн-глава</string>
     <string name="open_metrics_value">%1$s: %2$.2f с</string>
     <string name="open_metrics_empty">%1$s: нет измерений</string>
+    <string name="progress_import">Импортировать прогресс</string>
+    <string name="progress_merge">Объединить прогресс</string>
+    <string name="progress_import_preview">Совпадающие главы: %1$d. Отсутствующие или отличающиеся файлы: %2$d. Главы и настройки не создаются, не удаляются и не заменяются. Существующие закладки сохраняются. Для прочитанности и времени за день берётся большее значение, а не сумма.</string>
+    <string name="progress_import_invalid">Не удалось прочитать полную поддерживаемую копию. Данные не изменены.</string>
+    <string name="progress_import_done">Совпало: %1$d · пропущено: %2$d · ошибки закладок: %3$d</string>
+    <string name="progress_import_failed">Импорт прерван. Файлы глав не изменены; некоторые пустые закладки могли быть восстановлены. Повтори импорт той же копии.</string>
 </resources>
