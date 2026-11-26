@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.9 (candidate)
+## 0.2.9
 
 - Add a read-only offline storage overview with local chapter archive sizes and missing/empty file counts, grouped by series and source.
 - Add isolated tests for missing, empty and present chapter archives; no deletion or data-schema change.
