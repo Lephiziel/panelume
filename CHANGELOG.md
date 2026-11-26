@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.13 (candidate)
+## 0.2.13 (preview)
 
 - Manage offline archive space by series, largest first, with optional completed-only selection and explicit confirmation.
 - Report actual archive bytes removed, skipped/changed entries and failures.

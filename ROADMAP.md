@@ -48,11 +48,11 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - ZIP backups keep metadata and covers of unavailable online chapters; old complete v1 ZIPs still import. ZIPs with omitted archives require the new reader.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.2.12): 24 regression tests passed. Real-device eviction, restore and re-download checks remain outstanding. Same page count does not prove identical content. Latest stable remains 0.2.9. Next: storage management and first-panel performance.
 
-## 0.2.13 candidate — storage management
+## 0.2.13 preview — storage management
 
 - Select catalogue downloads by series, sorted by archive size, with completed-only filter enabled by default, selection preview and explicit confirmation.
 - Remove only confirmed file identities; skip changed entries, reject active readers/downloads, protect local imports and report partial results.
-- Real-device storage and recovery testing remains open. Next: first-panel performance and pilot measurements before streaming.
+- [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.2.13): 26 regression tests passed. Real-device storage and recovery testing remains open. Latest stable remains 0.2.9. Next: first-panel performance and pilot measurements before streaming.
 
 ## Priorities
 
