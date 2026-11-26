@@ -42,7 +42,7 @@ jobs:
       - name: Upload APK for release signing
         uses: actions/upload-artifact@v4
         with:
-          name: panelume-0.2.10-ci-apk
-          path: out/Panelume-0.2.10.apk
+          name: panelume-0.2.11-ci-apk
+          path: out/Panelume-0.2.11.apk
           if-no-files-found: error
           retention-days: 7

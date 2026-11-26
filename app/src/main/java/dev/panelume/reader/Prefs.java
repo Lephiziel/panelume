@@ -50,6 +50,16 @@ final class Prefs {
         values(context).edit().putString("last_search", query).apply();
     }
 
+    // Only explicitly selected, validated portable preferences are written.
+    static boolean restore(Context context, BackupSettings settings, int selected) {
+        SharedPreferences.Editor editor = values(context).edit();
+        int mask = selected & settings.available();
+        if ((mask & BackupSettings.LANGUAGE) != 0) editor.putString("language", settings.language);
+        if ((mask & BackupSettings.NETWORK) != 0) editor.putBoolean("unmetered", settings.unmetered);
+        if ((mask & BackupSettings.SEARCH) != 0) editor.putString("last_search", settings.lastSearch);
+        return mask == 0 || editor.commit();
+    }
+
     static boolean unmetered(Context context) {
         return values(context).getBoolean("unmetered", true);
     }

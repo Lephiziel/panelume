@@ -35,6 +35,12 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Repeated restore refuses to modify the populated library. Existing JSON merge remains available.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.2.10): 17 regression tests passed on synthetic fixtures. Latest stable remains 0.2.9. Full physical-device restore with real CBZ/PDF, preferences transfer, and safe removal of offline files while retaining progress remain open.
 
+## 0.2.11 candidate — optional settings transfer
+
+- Preview and individually opt in to restoring language, download-network policy and last search from existing v1 library ZIPs.
+- Validate known fields strictly; ignore missing, unknown or invalid fields. No settings are changed if library restoration fails. Never transfer setup completion, diagnostic metrics or pending jobs.
+- Keep the latest stable release at 0.2.9 until physical-device clean-install recovery is verified.
+
 ## Priorities
 
 | Stage | What readers can expect us to work on |

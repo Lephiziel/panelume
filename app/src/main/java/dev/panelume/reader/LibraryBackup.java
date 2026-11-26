@@ -78,7 +78,19 @@ final class LibraryBackup {
         try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(input))) {
             byte[] metadata = readMetadata(zip);
             Model model = model(metadata);
-            return new Preview(model.series.length(),model.chapters.size(),hash(metadata));
+            return new Preview(model.series.length(),model.chapters.size(),hash(metadata),model.settings);
+        }
+    }
+
+    /** Preferences are a separate commit after successful library restoration. */
+    static boolean restoreWithSettings(Context context, ShelfDb shelf, InputStream input, Preview preview,
+                                       int selected) throws IOException {
+        restore(shelf,input,preview);
+        try {
+            return Prefs.restore(context,preview.settings,selected);
+        } catch (RuntimeException preferencesFailure) {
+            // Library commit has already succeeded. Do not misreport it as a failed restore.
+            return false;
         }
     }
 
@@ -216,7 +228,7 @@ final class LibraryBackup {
         ProgressRestore.parse(text);
         try {
             JSONObject root=new JSONObject(text);
-            Model model=new Model(root.getJSONArray("series"),root.getJSONArray("aliases"),root.getJSONArray("reading_day"));
+            Model model=new Model(root.getJSONArray("series"),root.getJSONArray("aliases"),root.getJSONArray("reading_day"),BackupSettings.parse(root.optJSONObject("settings")));
             Map<Long,String> providers=new HashMap<>();
             for (int i=0;i<model.series.length();i++) {
                 JSONObject row=model.series.getJSONObject(i);
@@ -281,13 +293,19 @@ final class LibraryBackup {
     static final class Preview {
         final int series,chapters;
         final String metadataHash;
-        Preview(int series,int chapters,String metadataHash) { this.series=series; this.chapters=chapters; this.metadataHash=metadataHash; }
+        final BackupSettings settings;
+        Preview(int series,int chapters,String metadataHash,BackupSettings settings) {
+            this.series=series; this.chapters=chapters; this.metadataHash=metadataHash; this.settings=settings;
+        }
     }
     private static final class Budget { long bytes; }
     private static final class Model {
         final JSONArray series,aliases,days;
         final List<Chapter> chapters=new ArrayList<>();
-        Model(JSONArray series,JSONArray aliases,JSONArray days) { this.series=series; this.aliases=aliases; this.days=days; }
+        final BackupSettings settings;
+        Model(JSONArray series,JSONArray aliases,JSONArray days,BackupSettings settings) {
+            this.series=series; this.aliases=aliases; this.days=days; this.settings=settings;
+        }
     }
     private static final class Chapter {
         final JSONObject row;

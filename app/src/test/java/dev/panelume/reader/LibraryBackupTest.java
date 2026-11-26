@@ -109,6 +109,35 @@ public final class LibraryBackupTest {
         }
     }
 
+    @Test public void portablePreferencesApplyOnlyAfterSuccessfulRestore() throws Exception {
+        Context context=RuntimeEnvironment.getApplication();
+        try (TestShelf source=new TestShelf(context);TestShelf dest=new TestShelf(context)) {
+            Prefs.language(context,"ru"); Prefs.unmetered(context,false); Prefs.lastSearch(context,"Fixture");
+            byte[] zip=fixture(context,source.shelf);
+            LibraryBackup.Preview preview=LibraryBackup.preview(new ByteArrayInputStream(zip));
+            assertEquals(7,preview.settings.available());
+            Prefs.language(context,"en"); Prefs.unmetered(context,true); Prefs.lastSearch(context,"Existing");
+            assertEquals("en",Prefs.language(context)); assertTrue(Prefs.unmetered(context));
+            byte[] truncated=java.util.Arrays.copyOf(zip,zip.length/2);
+            try {
+                LibraryBackup.restoreWithSettings(context,dest.shelf,new ByteArrayInputStream(truncated),preview,7);
+                fail("Incomplete ZIP accepted");
+            } catch (IOException expected) {}
+            assertTrue(LibraryBackup.empty(dest.shelf));
+            assertEquals("en",Prefs.language(context)); assertTrue(Prefs.unmetered(context));
+            assertEquals("Existing",Prefs.lastSearch(context));
+            assertTrue(LibraryBackup.restoreWithSettings(context,dest.shelf,new ByteArrayInputStream(zip),preview,
+                BackupSettings.LANGUAGE|BackupSettings.SEARCH));
+            assertEquals("ru",Prefs.language(context)); assertTrue(Prefs.unmetered(context));
+            assertEquals("Fixture",Prefs.lastSearch(context));
+            try {
+                LibraryBackup.restoreWithSettings(context,dest.shelf,new ByteArrayInputStream(zip),preview,BackupSettings.NETWORK);
+                fail("Repeated restore accepted");
+            } catch (IOException expected) {}
+            assertTrue(Prefs.unmetered(context));
+        }
+    }
+
     @Test public void unexpectedEntryRejectedWithoutExtraction() throws Exception {
         ByteArrayOutputStream bytes=new ByteArrayOutputStream();
         try (ZipOutputStream out=new ZipOutputStream(bytes)) {
