@@ -86,7 +86,12 @@ final class LibraryBackup {
     static boolean restoreWithSettings(Context context, ShelfDb shelf, InputStream input, Preview preview,
                                        int selected) throws IOException {
         restore(shelf,input,preview);
-        return Prefs.restore(context,preview.settings,selected);
+        try {
+            return Prefs.restore(context,preview.settings,selected);
+        } catch (RuntimeException preferencesFailure) {
+            // Library commit has already succeeded. Do not misreport it as a failed restore.
+            return false;
+        }
     }
 
     static void restore(ShelfDb shelf, InputStream input, Preview preview) throws IOException {
