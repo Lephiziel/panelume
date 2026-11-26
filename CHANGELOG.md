@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.12 (candidate)
+## 0.2.12 (preview)
 
 - Remove a catalogue chapter download without removing its reading history, bookmark or cover.
 - Redownload unavailable catalogue chapters under their existing database ID; reject a changed page count or format.
