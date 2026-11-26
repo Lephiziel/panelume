@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -32,7 +31,6 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -171,9 +169,9 @@ public final class DownloadService extends Service {
         File target = ImportFiles.temporaryFile(this);
         try {
             long bytes = 0;
-            try (FileOutputStream file = new FileOutputStream(target);
-                 ZipOutputStream archive = new ZipOutputStream(file)) {
-                archive.setLevel(Deflater.NO_COMPRESSION);
+            byte[] digest;
+            try (DownloadArchive writer = new DownloadArchive(target)) {
+                ZipOutputStream archive = writer.zip;
                 for (int i = 0; i < pages.size(); i++) {
                     check(job);
                     if (job.bulk && i > 0) SystemClock.sleep(180);
@@ -181,12 +179,11 @@ public final class DownloadService extends Service {
                     if (!queue.progress(job.id, i + 1, pages.size())) throw new Fault(R.string.operation_cancelled);
                     if (i == 0 || i + 1 == pages.size() || i % 3 == 0) postProgress(job, i + 1, pages.size());
                 }
-                archive.finish();
-                file.getFD().sync();
+                digest = writer.finish();
             }
             check(job);
             String number = job.episode.number.isEmpty() ? "special" : job.episode.number;
-            ImportFiles.Staged staged = ImportFiles.inspectArchive(target, "Chapter " + number + ".cbz");
+            ImportFiles.Staged staged = ImportFiles.inspectDownloadedArchive(target, "Chapter " + number + ".cbz", digest);
             ImportFiles.store(shelf, staged, directory -> queue.save(job, staged, directory));
         } finally {
             target.delete();
