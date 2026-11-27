@@ -18,6 +18,7 @@ final class DownloadStatus {
                 : context.getString(R.string.download_opening);
         }
         if (job.bulk && !DownloadService.allowBulk(context)) return context.getString(R.string.waiting_network);
+        if (!job.bulk && DownloadService.active) return context.getString(R.string.download_priority_waiting);
         return context.getString(DownloadService.active ? R.string.download_waiting : R.string.download_paused);
     }
 }

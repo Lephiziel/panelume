@@ -112,9 +112,12 @@ public final class DownloadService extends Service {
                 }
                 try {
                     save(job);
+                } catch (Yielded priority) {
+                    // Partial archive was discarded in save(); the same job is queued again.
+                    continue;
                 } catch (IOException | RuntimeException failure) {
                     String code = errorCode(failure);
-                    if (closed || Thread.currentThread().isInterrupted() || (job.bulk && !allowBulk(this))) {
+                    if (closed || Thread.currentThread().isInterrupted() || (queue.runningMode(job.id)==1 && !allowBulk(this))) {
                         queue.pause(job.id);
                     } else {
                         queue.fail(job.id, code);
@@ -153,16 +156,24 @@ public final class DownloadService extends Service {
         return CatalogQueue.FILE;
     }
 
-    private void check(CatalogQueue.Job job) throws IOException {
-        if (closed || Thread.currentThread().isInterrupted() || !queue.running(job.id)
-            || (job.bulk && !allowBulk(this))) throw new Fault(R.string.operation_cancelled);
+    private static final class Yielded extends IOException {
+        private static final long serialVersionUID=1L;
+    }
+
+    // Only at safe boundaries; never interrupt a network response merely for priority.
+    private boolean check(CatalogQueue.Job job,boolean mayYield) throws IOException {
+        if (closed || Thread.currentThread().isInterrupted()) throw new Fault(R.string.operation_cancelled);
+        if (mayYield && queue.yieldToInteractive(job.id)) throw new Yielded();
+        int mode=queue.runningMode(job.id);
+        if (mode<0 || (mode==1 && !allowBulk(this))) throw new Fault(R.string.operation_cancelled);
+        return mode==1;
     }
 
     private void save(CatalogQueue.Job job) throws IOException {
         CatalogSource source = CatalogSource.named(job.title.provider);
         if (source == null) throw new Fault(R.string.source_error);
-        if (job.bulk) SystemClock.sleep(300);
-        check(job);
+        if (check(job,true)) SystemClock.sleep(300);
+        check(job,true);
         List<String> pages = source.pages(job.episode);
         if (pages.isEmpty()) throw new Fault(R.string.empty_chapter);
         if (pages.size() > MAX_PAGES) throw new Fault(R.string.page_limit, MAX_PAGES);
@@ -173,15 +184,19 @@ public final class DownloadService extends Service {
             try (DownloadArchive writer = new DownloadArchive(target)) {
                 ZipOutputStream archive = writer.zip;
                 for (int i = 0; i < pages.size(); i++) {
-                    check(job);
-                    if (job.bulk && i > 0) SystemClock.sleep(180);
+                    boolean bulk=check(job,true);
+                    if (bulk && i>0) {
+                        SystemClock.sleep(180);
+                        check(job,true);
+                    }
                     bytes += copyPage(archive, i, pages.get(i), job, source, bytes);
                     if (!queue.progress(job.id, i + 1, pages.size())) throw new Fault(R.string.operation_cancelled);
                     if (i == 0 || i + 1 == pages.size() || i % 3 == 0) postProgress(job, i + 1, pages.size());
                 }
                 digest = writer.finish();
             }
-            check(job);
+            // All images are downloaded. Finish inspection/registration rather than waste them.
+            check(job,false);
             String number = job.episode.number.isEmpty() ? "special" : job.episode.number;
             ImportFiles.Staged staged = ImportFiles.inspectDownloadedArchive(target, "Chapter " + number + ".cbz", digest);
             ImportFiles.store(shelf, staged, directory -> queue.save(job, staged, directory));

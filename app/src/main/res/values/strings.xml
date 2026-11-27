@@ -248,4 +248,5 @@
     <string name="offline_remove_result">Removed: %1$d · changed/skipped: %2$d · failed: %3$d. Archive bytes removed: %4$s. Reading history is retained.</string>
     <string name="offline_refresh">Refresh storage</string>
     <string name="open_metrics_distribution">%1$s: last %2$.2f s · median %3$.2f s · n=%4$d</string>
+    <string name="download_priority_waiting">Priority download · waiting for the current image</string>
 </resources>

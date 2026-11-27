@@ -140,6 +140,26 @@ final class CatalogQueue {
             ? job : null;
     }
 
+    // Re-read mode: tapping an already-running bulk chapter promotes the same job.
+    // -1 means the job is no longer running.
+    int runningMode(long id) {
+        try (Cursor cursor=shelf.getReadableDatabase().rawQuery(
+            "SELECT bulk FROM downloads WHERE id=? AND state=1",args(id))) {
+            return cursor.moveToFirst()?cursor.getInt(0):-1;
+        }
+    }
+
+    // One conditional write prevents racing a promotion or a cancellation.
+    boolean yieldToInteractive(long id) {
+        try (android.database.sqlite.SQLiteStatement statement=shelf.getWritableDatabase().compileStatement(
+            "UPDATE downloads SET state=0,current_page=0,total_pages=0,error='' "
+                +"WHERE id=? AND state=1 AND bulk=1 AND EXISTS "
+                +"(SELECT 1 FROM downloads WHERE state=0 AND bulk=0)")) {
+            statement.bindLong(1,id);
+            return statement.executeUpdateDelete()==1;
+        }
+    }
+
     boolean hasQueued(boolean allowBulk) {
         try (Cursor c = shelf.getReadableDatabase().rawQuery(
             "SELECT 1 FROM downloads WHERE state=0" + (allowBulk ? "" : " AND bulk=0") + " LIMIT 1", null)) {
@@ -183,7 +203,7 @@ final class CatalogQueue {
     }
 
     void pause(long job) {
-        shelf.getWritableDatabase().execSQL("UPDATE downloads SET state=0 WHERE id=? AND state=1", new Object[]{job});
+        shelf.getWritableDatabase().execSQL("UPDATE downloads SET state=0,current_page=0,total_pages=0 WHERE id=? AND state=1", new Object[]{job});
     }
 
     long save(Job job, ImportFiles.Staged staged, String directory) throws IOException {
