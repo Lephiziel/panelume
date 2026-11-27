@@ -1,0 +1,28 @@
+name: Export Android build tools
+on:
+  push:
+    branches:
+      - tools/apksigner-export
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android build tools
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          (set +o pipefail; yes | "$sdkmanager" --licenses >/dev/null)
+          "$sdkmanager" "build-tools;35.0.0"
+          mkdir -p out
+          cp -a "$ANDROID_HOME/build-tools/35.0.0" out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-build-tools-35
+          path: out/35.0.0/
+          if-no-files-found: error
+          retention-days: 1
