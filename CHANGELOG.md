@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.2 (candidate)
+## 0.3.2 (preview)
 
 - Cache validated page dimensions locally to avoid repeated image-header/PDF-page scans on opening registered chapters.
 - Reuse inspection results from imports and downloads; rebuild missing, invalid or stale indexes automatically.

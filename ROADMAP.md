@@ -66,11 +66,11 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Keep speculative art in a separate 4 MiB cache; promote only on visibility. One decode in flight, retry speculative failures on demand, discard stale geometry results.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.1): 33 regression tests passed. No network prefetch or chapter streaming; real-device scroll smoothness and memory measurements remain open. Latest stable remains 0.2.9. Next: reduce chapter opening overhead and prioritize user-requested downloads.
 
-## 0.3.2 candidate — registered chapter page index
+## 0.3.2 preview — registered chapter page index
 
 - Reuse page dimensions already inspected during import/download; lazily index older registered CBZ/PDF chapters on first successful open.
 - Bounded, versioned, checksummed optional sidecar tied to registered archive hash, format, length, modification time and page count. Missing, invalid or stale entries fall back to full page inspection. ZIP entry enumeration and PDF page-count checks remain.
-- Cache is not a replacement for content integrity verification; private archives are immutable under normal app operations. No DB or backup-format migration. Physical-device speed measurements remain open.
+- Cache is not a replacement for content integrity verification; private archives are immutable under normal app operations. No DB or backup-format migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.2): 36 regression tests passed. Physical-device speed measurements remain open. Next: prioritize user-requested downloads.
 
 ## Priorities
 
