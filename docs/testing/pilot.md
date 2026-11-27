@@ -53,4 +53,6 @@ In a disposable profile, enable the new option, open a downloadable catalogue ch
 
 ## Retry-safe next chapter preparation (0.3.5)
 
+The signed preview is published at [v0.3.5](https://github.com/Lephiziel/panelume/releases/tag/v0.3.5). CI reports 44 tests, with zero failures or skips; this is not a substitute for physical-device testing.
+
 Enable preparation, pass 75%, then simulate a temporary catalogue failure and confirm a single retry after the cooldown. While the feed lookup is in flight, scroll back below 75%, disable the option, lose focus, or switch to a disallowed metered network; confirm no job is enqueued and that preparation can resume after the condition clears. Keep another foreground/background job queued and confirm the successor is retried only after the queue becomes idle without fetching the catalogue again. A failed successor job and an evicted successor must not be retried automatically. Check process death, repeated resume/focus events, cancellation, and duplicate protection. No physical-device results yet.
