@@ -2,7 +2,7 @@ name: Android build
 on: [push, pull_request]
 
 concurrency:
-  group: android-${{ github.workflow }}-${{ github.ref }}
+  group: android-${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -42,7 +42,7 @@ jobs:
       - name: Upload APK for release signing
         uses: actions/upload-artifact@v4
         with:
-          name: panelume-0.3.4-ci-apk
-          path: out/Panelume-0.3.4.apk
+          name: panelume-0.3.5-ci-apk
+          path: out/Panelume-0.3.5.apk
           if-no-files-found: error
           retention-days: 7

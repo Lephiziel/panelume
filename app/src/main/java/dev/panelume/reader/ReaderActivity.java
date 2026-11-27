@@ -40,6 +40,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     private final ExecutorService renderer = Executors.newSingleThreadExecutor();
     private final ExecutorService preparation = Executors.newSingleThreadExecutor();
     private final Runnable completeAtEnd = this::completeIfStillAtEnd;
+    private final Runnable retryPreparation = this::maybePrepare;
 
     private ShelfDb db;
     private ShelfDb.Chapter chapter;
@@ -334,14 +335,23 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     }
 
     private void maybePrepare() {
-        if (preparationStarted || catalogTitle==null || !Prefs.prepareNext(this) || !resumed || !hasWindowFocus()) return;
+        if (preparationStarted || catalogTitle==null || !Prefs.prepareNext(this) || !resumed
+            || !hasWindowFocus() || currentPercent<NextChapter.THRESHOLD) return;
         long now=android.os.SystemClock.elapsedRealtime();
         if (now<nextPreparationCheck) return;
         nextPreparationCheck=now+5000;
         // Never start a network operation from the canvas draw traversal.
         main.post(() -> {
-            if (destroyed || preparationStarted || !eligible() || !Prefs.prepareNext(this)
-                || currentPercent<NextChapter.THRESHOLD || !preparationNetworkAllowed()) return;
+            if (destroyed || preparationStarted) return;
+            if (!NextChapter.canPrepare(currentPercent,eligible(),Prefs.prepareNext(this),preparationNetworkAllowed())) {
+                if (Prefs.prepareNext(this) && currentPercent>=NextChapter.THRESHOLD)
+                    schedulePreparationRetry(15_000);
+                return;
+            }
+            if (successor!=null) {
+                queueSuccessor(successor);
+                return;
+            }
             CatalogSource source=CatalogSource.named(catalogTitle.provider);
             if (source==null) return;
             preparationStarted=true;
@@ -350,24 +360,55 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
             preparation.execute(() -> {
                 NextChapter.Successor found;
                 try { found=NextChapter.after(source.episodes(title),current); }
-                catch (IOException | RuntimeException error) { return; }
+                catch (IOException | RuntimeException error) {
+                    main.post(() -> {
+                        if (!destroyed) schedulePreparationRetry(30_000);
+                    });
+                    return;
+                }
                 main.post(() -> {
                     if (destroyed) return;
                     successor=found;
                     updateEndCard();
-                    if (found==null || found.episode==null || found.episode.external
-                        || !eligible() || currentPercent<NextChapter.THRESHOLD
-                        || !Prefs.prepareNext(this) || !preparationNetworkAllowed()) return;
-                    // Do not restart a paused queue or retry a user's failed/evicted chapter.
-                    try {
-                        if (new CatalogQueue(db).enqueuePreparation(chapter.id,title,found.episode))
-                            DownloadService.begin(this,false);
-                    } catch (RuntimeException error) {
-                        Log.w("PanelumeReader","Next chapter preparation not queued");
-                    }
+                    if (found==null || found.episode==null || found.episode.external) return;
+                    queueSuccessor(found);
                 });
             });
         });
+    }
+
+    private void queueSuccessor(NextChapter.Successor found) {
+        if (found==null || found.episode==null || found.episode.external) return;
+        if (!NextChapter.canPrepare(currentPercent,eligible(),Prefs.prepareNext(this),preparationNetworkAllowed())) {
+            if (Prefs.prepareNext(this) && currentPercent>=NextChapter.THRESHOLD)
+                schedulePreparationRetry(15_000);
+            else preparationStarted=false;
+            return;
+        }
+        try {
+            int result=new CatalogQueue(db).enqueuePreparation(chapter.id,catalogTitle,found.episode);
+            if (result==CatalogQueue.PREPARATION_QUEUED) {
+                preparationStarted=true;
+                DownloadService.begin(this,false);
+            } else if (result==CatalogQueue.PREPARATION_BUSY) {
+                schedulePreparationRetry(15_000);
+            } else {
+                // Already downloaded, already queued/failed, or intentionally evicted:
+                // do not silently retry or duplicate it.
+                preparationStarted=true;
+            }
+        } catch (RuntimeException error) {
+            Log.w("PanelumeReader","Next chapter preparation not queued");
+            schedulePreparationRetry(30_000);
+        }
+    }
+
+    private void schedulePreparationRetry(long delay) {
+        if (destroyed) return;
+        preparationStarted=false;
+        nextPreparationCheck=android.os.SystemClock.elapsedRealtime()+delay;
+        main.removeCallbacks(retryPreparation);
+        main.postDelayed(retryPreparation,delay+250);
     }
 
     private boolean preparationNetworkAllowed() {
@@ -515,11 +556,13 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         resumed = true;
         applyChrome(false);
         updateTracking();
+        maybePrepare();
     }
 
     @Override
     protected void onPause() {
         resumed = false;
+        main.removeCallbacks(retryPreparation);
         checkpoint();
         super.onPause();
     }
@@ -527,7 +570,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     @Override
     public void onWindowFocusChanged(boolean focused) {
         super.onWindowFocusChanged(focused);
-        if (focused) updateTracking();
+        if (focused) { updateTracking(); maybePrepare(); }
         else checkpoint();
     }
 
@@ -541,6 +584,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     protected void onDestroy() {
         checkpoint();
         destroyed = true;
+        main.removeCallbacks(retryPreparation);
         if (receiverRegistered) unregisterReceiver(screen);
         if (canvas != null) canvas.release();
         if (chapter != null) {
