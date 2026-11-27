@@ -356,7 +356,8 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
                     successor=found;
                     updateEndCard();
                     if (found==null || found.episode==null || found.episode.external
-                        || !eligible() || !Prefs.prepareNext(this) || !preparationNetworkAllowed()) return;
+                        || !eligible() || currentPercent<NextChapter.THRESHOLD
+                        || !Prefs.prepareNext(this) || !preparationNetworkAllowed()) return;
                     // Do not restart a paused queue or retry a user's failed/evicted chapter.
                     try {
                         if (new CatalogQueue(db).enqueuePreparation(chapter.id,title,found.episode))
