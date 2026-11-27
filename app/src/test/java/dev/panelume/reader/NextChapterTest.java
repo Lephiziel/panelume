@@ -87,9 +87,9 @@ public final class NextChapterTest {
             assertEquals(CatalogQueue.FAILED,q.jobs(job.seriesId).get(0).state);
             q.cancel(job.id);
             long saved=save(fixture.shelf,q,ep("2",false));
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("2",false)));
+            assertEquals(CatalogQueue.PREPARATION_EXISTS,q.enqueuePreparation(id,TITLE,ep("2",false)));
             fixture.shelf.evict(saved);
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("2",false)));
+            assertEquals(CatalogQueue.PREPARATION_EXISTS,q.enqueuePreparation(id,TITLE,ep("2",false)));
             assertTrue(q.jobs(job.seriesId).isEmpty());
         }
     }
