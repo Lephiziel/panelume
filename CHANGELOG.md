@@ -1,10 +1,10 @@
 # Changelog
 
-## 0.3.6 (candidate)
+## 0.3.6 (preview)
 
 - Add a chapter-list shortcut to the reader toolbar for catalogue-backed chapters.
 - Reuse an existing catalogue activity safely and avoid stacking reader/catalogue screens when navigating between chapters.
-- Save the current reading position before leaving. No DB migration; reset per-build latency samples.
+- Save the current reading position before leaving. No DB migration; reset per-build latency samples. [Preview release](https://github.com/Lephiziel/panelume/releases/tag/v0.3.6), 45 automated regression tests passed.
 
 ## 0.3.5 (preview)
 

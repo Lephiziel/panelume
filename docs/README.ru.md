@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <small>Последняя preview-версия: <a href="https://github.com/Lephiziel/panelume/releases/tag/v0.3.5">Panelume 0.3.5</a> (предварительный выпуск; стабильная версия — 0.2.9).</small>
+  <small>Последняя preview-версия: <a href="https://github.com/Lephiziel/panelume/releases/tag/v0.3.6">Panelume 0.3.6</a> (предварительный выпуск; стабильная версия — 0.2.9).</small>
 </p>
 
 ## Как начать читать
