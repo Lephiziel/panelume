@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.3.4 (candidate)
+## 0.3.4 (preview)
 
 - Optional preparation of one next catalogue chapter near the end of reading, off by default and governed by series download network policy.
 - Avoid duplicate, failed or intentionally evicted chapters; do not wake a paused queue.
 - Refresh the end-card successor, distinguish a saved chapter from a verified next catalogue entry, and offer the chapter list when needed.
-- No schema migration; reset per-build latency samples.
+- No schema migration; reset per-build latency samples. [Preview release](https://github.com/Lephiziel/panelume/releases/tag/v0.3.4), 43 automated regression tests passed.
 
 ## 0.3.3 (preview)
 
