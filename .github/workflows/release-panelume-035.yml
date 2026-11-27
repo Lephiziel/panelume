@@ -1,0 +1,67 @@
+name: Publish Panelume 0.3.5 APK
+on:
+  push:
+    branches:
+      - release/panelume-0.3.5
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: panelume-0.3.5-ci-apk
+          path: out
+          github-token: ${{ github.token }}
+          run-id: 45986560143
+      - name: Reconstruct privately signed APK and verify checksum
+        run: |
+          set -euo pipefail
+          echo "3661cbeda4be10d9abbc0dfdbeab47372b7d8b31ddc5778193c4183ffd779916  out/Panelume-0.3.5.apk" | sha256sum -c
+          python3 - <<'PY'
+          import base64, zlib
+          from pathlib import Path
+          encoded = Path(".github/release/0.3.5-signature.patch.zlib.b64").read_text().strip()
+          Path("/tmp/panelume-035.patch").write_bytes(zlib.decompress(base64.b64decode(encoded)))
+          PY
+          cp out/Panelume-0.3.5.apk app.apk
+          git apply --binary /tmp/panelume-035.patch
+          echo "6ba5a45d13810b3e689fd93733b14ae29e449b2b9e5767abd36717570e200089  app.apk" | sha256sum -c
+          mv -f app.apk out/Panelume-0.3.5.apk
+      - name: Verify original certificate, alignment and Android package identity
+        run: |
+          set -euo pipefail
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          if [[ ! -x "$tools/apksigner" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"
+          fi
+          "$tools/apksigner" verify --verbose --print-certs out/Panelume-0.3.5.apk | tee /tmp/apksigner-check.txt
+          grep -F "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner-check.txt
+          grep -F "Verified using v3 scheme (APK Signature Scheme v3): true" /tmp/apksigner-check.txt
+          grep -F "Signer #1 certificate SHA-256 digest: e71850cc090b48c0f70c9af1aeb0f8a123c128b423aa008fd46861337f1cfec9" /tmp/apksigner-check.txt
+          "$tools/zipalign" -c -v 4 out/Panelume-0.3.5.apk
+          "$tools/aapt2" dump badging out/Panelume-0.3.5.apk | tee /tmp/panelume-badging.txt
+          grep -E "^package: name='dev.panelume.reader.next' versionCode='21' versionName='0.3.5'" /tmp/panelume-badging.txt
+      - name: Publish verified release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.3.5 --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release already exists; refusing to overwrite."
+            exit 1
+          fi
+          cp out/Panelume-0.3.5.apk out/Panelume.apk
+          (cd out && sha256sum Panelume-0.3.5.apk Panelume.apk > SHA256SUMS.txt)
+          gh release create v0.3.5 out/Panelume-0.3.5.apk out/Panelume.apk out/SHA256SUMS.txt \
+            --repo "${{ github.repository }}" \
+            --target 0f852aeb0f1c414e1d2fc583e02495f8358b2513 \
+            --prerelease --latest=false \
+            --title "Panelume 0.3.5 — Reliable next chapter preparation (preview)" \
+            --notes "Hardens optional next-chapter preparation: transient catalogue failures retry after a cooldown; a resolved successor is reused while the download queue is busy; eligibility, reading threshold, preference and network policy are rechecked before queuing. Failed, already-present and intentionally evicted chapters are not retried. No database migration. Forty-four automated regression tests passed. Original signing certificate and application ID are preserved; versionCode is 21. Physical-device validation of metered/unmetered transitions, queue contention and chapter navigation remains outstanding. Latest stable remains 0.2.9."
