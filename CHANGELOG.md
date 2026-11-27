@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.3.5 (candidate)
+## 0.3.5 (preview)
 
 - Retry transient catalogue/network failures after a cooldown.
 - Reuse the resolved next chapter when the download queue is busy; retry once it becomes idle.
 - Keep automatic retries away from failed, already downloaded or intentionally evicted chapters.
-- No DB migration; reset per-build latency samples.
+- No DB migration; reset per-build latency samples. [Preview release](https://github.com/Lephiziel/panelume/releases/tag/v0.3.5), 44 automated regression tests passed.
 
 ## 0.3.4 (preview)
 

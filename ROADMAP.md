@@ -85,12 +85,12 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - End card rechecks the saved successor and opens it directly when available; otherwise offer explicit download or the catalogue list. With no feed, label the next local entry as the next saved chapter.
 - No DB or backup migration. Device-local opt-in is not restored from backups. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.4): 43 regression tests passed; the original signing certificate and application ID are preserved. Real-device navigation, network usage and latency remain unverified.
 
-## 0.3.5 candidate — retry-safe next-chapter preparation
+## 0.3.5 preview — retry-safe next-chapter preparation
 
 - Retry transient catalogue/network failures after a cooldown; reuse the resolved successor instead of re-fetching the catalogue.
 - If the user scrolls below the threshold, disables the option, loses eligibility, or the download queue is busy, do not enqueue; retry only when the reader becomes eligible again.
 - Distinguish queued, already-present/failed/evicted, busy and invalid successor states. Never auto-retry failed or intentionally evicted chapters.
-- No DB migration. Real-device metered/unmetered transitions and queue contention remain to be tested.
+- No DB migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.5): 44 regression tests passed; the original signing certificate and application ID are preserved. Real-device metered/unmetered transitions and queue contention remain to be tested.
 
 ## Priorities
 
