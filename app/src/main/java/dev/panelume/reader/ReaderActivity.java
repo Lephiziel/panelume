@@ -38,11 +38,15 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService renderer = Executors.newSingleThreadExecutor();
+    private final ExecutorService preparation = Executors.newSingleThreadExecutor();
     private final Runnable completeAtEnd = this::completeIfStillAtEnd;
 
     private ShelfDb db;
     private ShelfDb.Chapter chapter;
-    private ShelfDb.Chapter next;
+    private CatalogSource.Title catalogTitle;
+    private NextChapter.Successor successor;
+    private boolean preparationStarted;
+    private long nextPreparationCheck;
     private ReaderCanvas canvas;
     private Bookmark bookmark;
     private ReadingClock clock;
@@ -107,7 +111,8 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         networkOpen = getIntent().getBooleanExtra(NETWORK_OPEN, false);
         // A recreated reader isn't a new opening sample.
         timingRecorded = state != null;
-        next = db.next(chapter);
+        if (!chapter.provider.isEmpty() && !chapter.catalogId.isEmpty())
+            catalogTitle = new CatalogQueue(db).title(chapter.seriesId);
         completed = chapter.done;
         if (state != null) chrome = state.getBoolean("chrome", true);
         clock = new ReadingClock(db, chapter.id, this::eligible);
@@ -325,6 +330,49 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         } else {
             scheduleCompletion();
         }
+        if (NextChapter.readyToPrepare(percent,frontier,chapter.pages,allRendered)) maybePrepare();
+    }
+
+    private void maybePrepare() {
+        if (preparationStarted || catalogTitle==null || !Prefs.prepareNext(this) || !resumed || !hasWindowFocus()) return;
+        long now=android.os.SystemClock.elapsedRealtime();
+        if (now<nextPreparationCheck) return;
+        nextPreparationCheck=now+5000;
+        // Never start a network operation from the canvas draw traversal.
+        main.post(() -> {
+            if (destroyed || preparationStarted || !eligible() || !Prefs.prepareNext(this)
+                || currentPercent<NextChapter.THRESHOLD || !preparationNetworkAllowed()) return;
+            CatalogSource source=CatalogSource.named(catalogTitle.provider);
+            if (source==null) return;
+            preparationStarted=true;
+            CatalogSource.Title title=catalogTitle;
+            String current=chapter.catalogId;
+            preparation.execute(() -> {
+                NextChapter.Successor found;
+                try { found=NextChapter.after(source.episodes(title),current); }
+                catch (IOException | RuntimeException error) { return; }
+                main.post(() -> {
+                    if (destroyed) return;
+                    successor=found;
+                    updateEndCard();
+                    if (found==null || found.episode==null || found.episode.external
+                        || !eligible() || currentPercent<NextChapter.THRESHOLD
+                        || !Prefs.prepareNext(this) || !preparationNetworkAllowed()) return;
+                    // Do not restart a paused queue or retry a user's failed/evicted chapter.
+                    try {
+                        if (new CatalogQueue(db).enqueuePreparation(chapter.id,title,found.episode))
+                            DownloadService.begin(this,false);
+                    } catch (RuntimeException error) {
+                        Log.w("PanelumeReader","Next chapter preparation not queued");
+                    }
+                });
+            });
+        });
+    }
+
+    private boolean preparationNetworkAllowed() {
+        android.net.ConnectivityManager manager=getSystemService(android.net.ConnectivityManager.class);
+        return manager!=null && manager.getActiveNetwork()!=null && DownloadService.allowBulk(this);
     }
 
     private void applyEndVisibility() {
@@ -420,15 +468,37 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
             if (lastPanelRendered && eligible()) markRead();
             return;
         }
-        if (next != null) startActivity(intent(this, next.id, false));
+        ShelfDb.Chapter saved=nextSaved();
+        if (saved!=null) startActivity(intent(this,saved.id,false));
+        else if (catalogTitle!=null && (successor==null || successor.episode!=null)) {
+            if (successor!=null && !successor.episode.external) {
+                startActivity(CatalogActivity.redownload(this,catalogTitle,successor.episode.id,false));
+            } else startActivity(CatalogActivity.intent(this,catalogTitle));
+        }
         finish();
+    }
+
+    private ShelfDb.Chapter nextSaved() {
+        if (successor==null) return db.next(chapter);
+        if (successor.episode==null || successor.episode.external) return null;
+        for (ShelfDb.Chapter saved:db.chapters(chapter.seriesId))
+            if (successor.episode.id.equals(saved.catalogId)) return saved;
+        return null;
     }
 
     private void updateEndCard() {
         endTitle.setText(completed ? R.string.read_end : R.string.chapter_end);
-        endAction.setText(completed
-            ? (next == null ? getString(R.string.close_chapter) : getString(R.string.next_chapter))
-            : getString(R.string.mark_read));
+        int action=R.string.mark_read;
+        if (completed) {
+            ShelfDb.Chapter saved=nextSaved();
+            if (saved!=null) action=catalogTitle!=null && successor==null
+                ? R.string.next_saved_chapter : R.string.next_chapter;
+            else if (catalogTitle!=null && successor==null) action=R.string.next_open_catalogue;
+            else if (catalogTitle!=null && successor.episode!=null) action=successor.episode.external
+                ? R.string.next_open_catalogue : R.string.next_chapter;
+            else action=R.string.close_chapter;
+        }
+        endAction.setText(action);
     }
 
     private void checkpoint() {
@@ -478,6 +548,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
             long id = chapter.id;
             renderer.execute(() -> db.releaseReader(id));
         }
+        preparation.shutdownNow();
         renderer.shutdown();
         super.onDestroy();
     }

@@ -44,3 +44,7 @@ Use a real long CBZ and PDF on disposable profiles. Compare 0.3.1 and 0.3.2, rec
 ## Interactive priority (0.3.3)
 
 On an unmetered network start a long bulk download and wait until at least one page has arrived. Tap another chapter: at the next safe image boundary, the bulk job must return to the queue with its partial archive removed, and the interactive chapter must start before any queued bulk job. After completion the original job may restart from page one. Tap the currently running bulk chapter in a separate run: it must continue without restarting or duplicating. Repeat with a metered network, bulk downloads disallowed, and an explicit chapter request; queued bulk jobs must stay blocked. Record wait time, bytes retransferred, failures and progress before and after restart. Also test cancellation, process death, offline use and bookmark retention. No physical-device results yet.
+
+## Next chapter preparation (0.3.4)
+
+In a disposable profile, enable the new option, open a downloadable catalogue chapter, read contiguously past 75% and verify at most one following chapter is queued when idle. Repeat with the option off, metered network blocked, a paused queue, a failed job, a previously evicted successor, an external successor and the final chapter. Confirm no automatic duplicate or retry. Tap the end card after the download completes and verify the actual next chapter opens at its own saved position. Also test navigating away during catalogue lookup and process restart. Record actual wait time and network bytes. No device results yet.

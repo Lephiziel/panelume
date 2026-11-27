@@ -78,6 +78,13 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Promoting the current job preserves its progress and updates its network mode; never preempt another interactive transfer or a completed archive.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.3): 39 regression tests passed. No additional workers or schema migration. Partial archive reuse and real-device latency/bandwidth measurements remain open. Next: optional automatic preparation of the next chapter.
 
+## 0.3.4 candidate — optional next-chapter preparation
+
+- Opt-in, off by default. After 75% of visible/contiguous reading, resolve exactly the next item in the current catalogue feed; never skip an external entry or guess when identity is ambiguous.
+- Queue at most one new bulk job when the queue is idle and the configured network policy permits it. Do not retry failed jobs or restore intentionally evicted archives automatically.
+- End card rechecks the saved successor and opens it directly when available; otherwise offer explicit download or the catalogue list. With no feed, label the next local entry as the next saved chapter.
+- No DB or backup migration. Device-local opt-in is not restored from backups. Real-device navigation, network usage and latency remain unverified.
+
 ## Priorities
 
 | Stage | What readers can expect us to work on |

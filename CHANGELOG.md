@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.4 (candidate)
+
+- Optional preparation of one next catalogue chapter near the end of reading, off by default and governed by series download network policy.
+- Avoid duplicate, failed or intentionally evicted chapters; do not wake a paused queue.
+- Refresh the end-card successor, distinguish a saved chapter from a verified next catalogue entry, and offer the chapter list when needed.
+- No schema migration; reset per-build latency samples.
+
 ## 0.3.3 (preview)
 
 - Prioritize requested chapters over in-flight bulk downloads at image boundaries.
