@@ -36,9 +36,23 @@ abstract class MangaDocument implements Closeable {
     String number = "";
 
     static MangaDocument open(File file, String format) throws IOException {
-        if ("pdf".equals(format)) return new Pdf(file);
-        if ("cbz".equals(format)) return new Archive(file);
+        return open(file,format,null);
+    }
+
+    private static MangaDocument open(File file,String format,PageSize[] indexed) throws IOException {
+        if ("pdf".equals(format)) return new Pdf(file,indexed);
+        if ("cbz".equals(format)) return new Archive(file,indexed);
         throw new Fault(R.string.format_error);
+    }
+
+    // Only registered private chapter files use the optional index. Imports always inspect.
+    static MangaDocument openRegistered(File file,String format,String digest,int expectedPages) throws IOException {
+        PageIndex.Stamp stamp=PageIndex.stamp(file);
+        PageSize[] cached=PageIndex.read(file,format,digest,expectedPages,stamp);
+        MangaDocument doc=open(file,format,cached);
+        if (cached==null || doc.pages!=cached)
+            PageIndex.write(file,format,digest,expectedPages,stamp,doc.pages);
+        return doc;
     }
 
     abstract Bitmap tile(int page, int width, int top, int height) throws IOException;
@@ -69,7 +83,7 @@ abstract class MangaDocument implements Closeable {
     private static final class Pdf extends MangaDocument {
         private final PdfRenderer renderer;
 
-        Pdf(File file) throws IOException {
+        Pdf(File file,PageSize[] indexed) throws IOException {
             ParcelFileDescriptor descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
             try {
                 renderer = new PdfRenderer(descriptor);
@@ -83,6 +97,10 @@ abstract class MangaDocument implements Closeable {
             try {
                 int count = renderer.getPageCount();
                 checkCount(count);
+                if (indexed!=null && indexed.length==count) {
+                    pages=indexed;
+                    return;
+                }
                 pages = new PageSize[count];
                 for (int i = 0; i < count; i++) {
                     if (Thread.currentThread().isInterrupted()) throw new Fault(R.string.operation_cancelled);
@@ -126,7 +144,7 @@ abstract class MangaDocument implements Closeable {
         private BitmapRegionDecoder decoder;
         private int decoderPage = -1;
 
-        Archive(File file) throws IOException {
+        Archive(File file,PageSize[] indexed) throws IOException {
             zip = new ZipFile(file);
             try {
                 if (zip.size() > MAX_PAGES * 2) throw new Fault(R.string.archive_limit);
@@ -149,15 +167,18 @@ abstract class MangaDocument implements Closeable {
                 }
                 checkCount(images.size());
                 images.sort((left, right) -> Names.naturalCompare(left.getName(), right.getName()));
-                pages = new PageSize[images.size()];
-                for (int i = 0; i < pages.length; i++) {
+                if (indexed!=null && indexed.length==images.size()) pages=indexed;
+                else {
+                    pages = new PageSize[images.size()];
+                    for (int i = 0; i < pages.length; i++) {
                     if (Thread.currentThread().isInterrupted()) throw new Fault(R.string.operation_cancelled);
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inJustDecodeBounds = true;
                     try (InputStream in = stream(images.get(i))) {
                         BitmapFactory.decodeStream(in, null, options);
                     }
-                    pages[i] = new PageSize(options.outWidth, options.outHeight);
+                        pages[i] = new PageSize(options.outWidth, options.outHeight);
+                    }
                 }
                 if (metadata != null && metadata.getSize() > 0 && metadata.getSize() <= 65536) {
                     readMetadata(metadata);

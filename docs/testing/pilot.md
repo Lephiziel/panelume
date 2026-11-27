@@ -36,3 +36,7 @@ Compare 0.2.13 and 0.3.0 on separate disposable profiles with the same device, c
 ## Tile prefetch comparison (0.3.1)
 
 Compare 0.3.0 and 0.3.1 using identical long CBZ and PDF chapters on disposable profiles. Observe blank-tile time, frame timing, peak memory and scroll/zoom/rotation behavior during the same slow-scroll and fast-fling sequences. Test a malformed image and rapid direction changes. A single speculative decode can finish before a newly visible tile; no extra worker is created. Record actual results before claiming improved smoothness. No device results yet.
+
+## Page index comparison (0.3.2)
+
+Use a real long CBZ and PDF on disposable profiles. Compare 0.3.1 and 0.3.2, recording cold index miss and subsequent index hits separately; test imported and freshly downloaded files. Delete only the derived page-index sidecar in a test profile and verify opening still works and positions match. Repeat with a truncated sidecar and a restored ZIP backup (index absent). Record first-panel latency, page count, position and errors. No device measurements yet.
