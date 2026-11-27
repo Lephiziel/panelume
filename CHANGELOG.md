@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.6 (candidate)
+
+- Add a chapter-list shortcut to the reader toolbar for catalogue-backed chapters.
+- Reuse an existing catalogue activity safely and avoid stacking reader/catalogue screens when navigating between chapters.
+- Save the current reading position before leaving. No DB migration; reset per-build latency samples.
+
 ## 0.3.5 (preview)
 
 - Retry transient catalogue/network failures after a cooldown.

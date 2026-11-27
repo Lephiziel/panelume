@@ -92,6 +92,12 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Distinguish queued, already-present/failed/evicted, busy and invalid successor states. Never auto-retry failed or intentionally evicted chapters.
 - No DB migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.5): 44 regression tests passed; the original signing certificate and application ID are preserved. Real-device metered/unmetered transitions and queue contention remain to be tested.
 
+## 0.3.6 candidate — quick chapter navigation from the reader
+
+- Add a chapter-list shortcut to the reader toolbar for catalogue-backed chapters. Reuse the existing catalogue screen and return to the same series.
+- Clear the current reader from the activity stack before showing the catalogue; if a catalogue is already present, refresh it with the same title rather than stacking readers/catalogues.
+- Preserve the current bookmark before leaving. Manual/imported chapters keep their existing toolbar unchanged. No DB or backup migration.
+
 ## Priorities
 
 | Stage | What readers can expect us to work on |

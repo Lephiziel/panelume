@@ -40,7 +40,7 @@ sed '1s/<manifest /<manifest package="dev.panelume.reader.next" /' \
     app/src/main/AndroidManifest.xml > "$work/AndroidManifest.xml"
 "$build_tools/aapt2" link -I "$platform" --manifest "$work/AndroidManifest.xml" \
     --custom-package dev.panelume.reader \
-    --min-sdk-version 26 --target-sdk-version 35 --version-code 21 --version-name 0.3.5 \
+    --min-sdk-version 26 --target-sdk-version 35 --version-code 22 --version-name 0.3.6 \
     -A app/src/main/assets --java "$work/generated" -o "$work/unsigned.apk" "$work/resources.zip"
 mapfile -d '' sources < <(find app/src/main/java "$work/generated" -name '*.java' -print0)
 "${compiler[@]}" -encoding UTF-8 -source 8 -target 8 -bootclasspath "$build_tools/core-lambda-stubs.jar:$platform" \

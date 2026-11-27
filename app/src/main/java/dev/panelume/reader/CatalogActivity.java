@@ -64,8 +64,25 @@ public final class CatalogActivity extends PanelumeActivity {
             .putExtra("url", title.url).putExtra("cover", title.cover).putExtra("description", title.description);
     }
 
+    static Intent chapterListIntent(Context context,CatalogSource.Title title) {
+        return intent(context,title).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    }
+
     static Intent redownload(Context context, CatalogSource.Title title, String episode, boolean restart) {
         return intent(context,title).putExtra("requested_episode",episode).putExtra("requested_restart",restart);
+    }
+
+    @Override protected void onNewIntent(Intent incoming) {
+        super.onNewIntent(incoming);
+        setIntent(incoming);
+        // A reader may reopen a catalogue already lower in the activity stack.
+        // Clear stale pending-open state before recreating it for the selected title.
+        awaiting="";
+        awaitingSince=0L;
+        awaitingRestart=false;
+        requestedEpisode="";
+        requestedRestart=false;
+        recreate();
     }
 
     @Override protected void onCreate(Bundle state) {
