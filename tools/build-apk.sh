@@ -57,7 +57,7 @@ if [[ ! -f "$keystore" ]]; then
         -keyalg RSA -keysize 2048 -validity 10000
 fi
 "$build_tools/apksigner" sign --ks "$keystore" --ks-key-alias androiddebugkey \
-    --ks-pass pass:android --key-pass pass:android --out "$work/Panelume-0.3.4.apk" "$work/aligned.apk"
-"$build_tools/apksigner" verify "$work/Panelume-0.3.4.apk"
-mv "$work/Panelume-0.3.4.apk" "$out/"
-printf '%s\n' "$out/Panelume-0.3.4.apk"
+    --ks-pass pass:android --key-pass pass:android --out "$work/Panelume-0.3.5.apk" "$work/aligned.apk"
+"$build_tools/apksigner" verify "$work/Panelume-0.3.5.apk"
+mv "$work/Panelume-0.3.5.apk" "$out/"
+printf '%s\n' "$out/Panelume-0.3.5.apk"
