@@ -87,9 +87,10 @@ final class CatalogQueue {
         try {
             long series=seriesId(db,title);
             ShelfDb.Chapter current=shelf.chapter(currentId);
-            if (series<0 || current==null || current.seriesId!=series || current.catalogId.isEmpty()
-                || current.catalogId.equals(episode.id)) return PREPARATION_INVALID;
-            if (savedId(db,series,episode.id)>0) return PREPARATION_EXISTS;
+            if (series<0 || current==null || current.seriesId!=series || current.catalogId.isEmpty())
+                return PREPARATION_INVALID;
+            if (current.catalogId.equals(episode.id) || savedId(db,series,episode.id)>0)
+                return PREPARATION_EXISTS;
             // A failed job is deliberately not retried automatically either.
             try (Cursor cursor=db.rawQuery("SELECT 1 FROM downloads WHERE series_id=? AND episode_id=? LIMIT 1",
                 new String[]{Long.toString(series),episode.id})) {
