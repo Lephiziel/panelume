@@ -471,6 +471,12 @@ final class Ui {
                 case "done":
                     line(c, 5, 12.5f, 10, 17, 19, 7);
                     break;
+                case "chapters":
+                    for (int y : new int[]{6,12,18}) {
+                        c.drawCircle(5, y, 1.1f, paint);
+                        line(c, 10, y, 20, y);
+                    }
+                    break;
                 case "restart":
                     c.drawArc(5, 5, 20, 20, -128, 292, false, paint);
                     line(c, 4, 6, 4, 12, 10, 12);

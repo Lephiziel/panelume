@@ -168,6 +168,10 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         }
         Ui.weighted(toolbar, labels);
         Ui.spacer(toolbar, 10);
+        if (catalogTitle!=null) {
+            Ui.add(toolbar, Ui.iconButton(this,"chapters",getString(R.string.chapters),0xbf242522,Ui.TEXT,
+                this::openChapterList),48,48);
+        }
         Ui.add(toolbar, Ui.iconButton(this, "restart", getString(R.string.jump_to_start), 0xbf242522, Ui.ACCENT, () -> {
             if (canvas != null) canvas.restart();
         }), 48, 48);
@@ -502,6 +506,12 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         meter.setProgress(100);
         if (currentPage >= 0) counter.setText((currentPage + 1) + " / " + chapter.pages + "   ·   100%");
         updateEndCard();
+    }
+
+    private void openChapterList() {
+        if (catalogTitle==null) return;
+        startActivity(CatalogActivity.chapterListIntent(this,catalogTitle));
+        finish();
     }
 
     private void endAction() {
