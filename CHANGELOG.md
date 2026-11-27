@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.3 (candidate)
+## 0.3.3 (preview)
 
 - Prioritize requested chapters over in-flight bulk downloads at image boundaries.
 - Keep interrupted bulk jobs queued; incomplete archives are discarded and restarted later.
