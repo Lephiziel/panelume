@@ -167,16 +167,17 @@ abstract class MangaDocument implements Closeable {
                 }
                 checkCount(images.size());
                 images.sort((left, right) -> Names.naturalCompare(left.getName(), right.getName()));
+                if (Thread.currentThread().isInterrupted()) throw new Fault(R.string.operation_cancelled);
                 if (indexed!=null && indexed.length==images.size()) pages=indexed;
                 else {
                     pages = new PageSize[images.size()];
                     for (int i = 0; i < pages.length; i++) {
-                    if (Thread.currentThread().isInterrupted()) throw new Fault(R.string.operation_cancelled);
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inJustDecodeBounds = true;
-                    try (InputStream in = stream(images.get(i))) {
-                        BitmapFactory.decodeStream(in, null, options);
-                    }
+                        if (Thread.currentThread().isInterrupted()) throw new Fault(R.string.operation_cancelled);
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inJustDecodeBounds = true;
+                        try (InputStream in = stream(images.get(i))) {
+                            BitmapFactory.decodeStream(in, null, options);
+                        }
                         pages[i] = new PageSize(options.outWidth, options.outHeight);
                     }
                 }

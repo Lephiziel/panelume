@@ -36,9 +36,9 @@ final class PageIndex {
 
     static MangaDocument.PageSize[] read(File file,String format,String digest,int count,Stamp stamp) {
         String hash=hashPart(digest);
-        if (hash.isEmpty() || count<1 || count>MAX_PAGES || !stamp.matches(file)) return null;
-        File index=sidecar(file);
         try {
+            if (hash.isEmpty() || count<1 || count>MAX_PAGES || !stamp.matches(file)) return null;
+            File index=sidecar(file);
             if (!index.isFile() || index.length()>MAX_BYTES || index.length()<16) return null;
             byte[] data;
             try (InputStream input=new FileInputStream(index)) {
