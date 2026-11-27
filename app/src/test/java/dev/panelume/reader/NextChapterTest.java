@@ -28,6 +28,14 @@ public final class NextChapterTest {
         assertNull(NextChapter.after(Arrays.asList(a,b,a),"1"));
         assertNull(NextChapter.after(Arrays.asList(a,b,b),"1"));
     }
+    @Test public void preparationRequiresEveryGate() {
+        assertTrue(NextChapter.canPrepare(75,true,true,true));
+        assertFalse(NextChapter.canPrepare(74,true,true,true));
+        assertFalse(NextChapter.canPrepare(75,false,true,true));
+        assertFalse(NextChapter.canPrepare(75,true,false,true));
+        assertFalse(NextChapter.canPrepare(75,true,true,false));
+    }
+
     @Test public void thresholdNeedsRenderedContiguousProgress() {
         assertFalse(NextChapter.readyToPrepare(74,9,10,true));
         assertFalse(NextChapter.readyToPrepare(90,2,10,true));
@@ -60,17 +68,22 @@ public final class NextChapterTest {
         try(TestShelf fixture=new TestShelf(c)) {
             CatalogQueue q=new CatalogQueue(fixture.shelf);
             long id=save(fixture.shelf,q,ep("1",false));
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("1",false)));
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("2",true)));
-            assertTrue(q.enqueuePreparation(id,TITLE,ep("2",false)));
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("2",false)));
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("3",false)));
+            assertEquals(CatalogQueue.PREPARATION_EXISTS,q.enqueuePreparation(id,TITLE,ep("1",false)));
+            assertEquals(CatalogQueue.PREPARATION_INVALID,q.enqueuePreparation(id,TITLE,ep("2",true)));
+            q.enqueue(TITLE,Collections.singletonList(ep("9",false)),false);
+            CatalogQueue.Job foreground=q.next(true);
+            assertNotNull(foreground);
+            assertEquals(CatalogQueue.PREPARATION_BUSY,q.enqueuePreparation(id,TITLE,ep("2",false)));
+            q.cancel(foreground.id);
+            assertEquals(CatalogQueue.PREPARATION_QUEUED,q.enqueuePreparation(id,TITLE,ep("2",false)));
+            assertEquals(CatalogQueue.PREPARATION_EXISTS,q.enqueuePreparation(id,TITLE,ep("2",false)));
+            assertEquals(CatalogQueue.PREPARATION_BUSY,q.enqueuePreparation(id,TITLE,ep("3",false)));
             assertNull(q.next(false));
             CatalogQueue.Job job=q.next(true);
             assertTrue(job.bulk);
             assertEquals("2",job.episode.id);
             q.fail(job.id,CatalogQueue.NETWORK);
-            assertFalse(q.enqueuePreparation(id,TITLE,ep("2",false)));
+            assertEquals(CatalogQueue.PREPARATION_EXISTS,q.enqueuePreparation(id,TITLE,ep("2",false)));
             assertEquals(CatalogQueue.FAILED,q.jobs(job.seriesId).get(0).state);
             q.cancel(job.id);
             long saved=save(fixture.shelf,q,ep("2",false));

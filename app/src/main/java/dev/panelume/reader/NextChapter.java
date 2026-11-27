@@ -5,6 +5,9 @@ import java.util.List;
 final class NextChapter {
     static final int THRESHOLD=75;
     private NextChapter() {}
+    static boolean canPrepare(int percent,boolean eligible,boolean enabled,boolean networkAllowed) {
+        return percent>=THRESHOLD && eligible && enabled && networkAllowed;
+    }
     static boolean readyToPrepare(int percent,double frontier,int pages,boolean allRendered) {
         return allRendered && pages>0 && percent>=THRESHOLD && frontier>=pages*(THRESHOLD/100.0);
     }

@@ -18,6 +18,11 @@ final class CatalogQueue {
     static final String FILE = "file";
     static final String CHANGED = "chapter_changed";
 
+    static final int PREPARATION_QUEUED=1;
+    static final int PREPARATION_EXISTS=0;
+    static final int PREPARATION_BUSY=-1;
+    static final int PREPARATION_INVALID=-2;
+
     private static final String JOBS = "SELECT d.id,d.series_id,d.episode_id,d.number,d.caption,d.url,d.credit,"
         + "d.bulk,d.state,d.current_page,d.total_pages,d.error,"
         + "s.catalog_provider,s.catalog_id,s.title,s.catalog_url,s.catalog_cover,s.catalog_description"
@@ -75,17 +80,24 @@ final class CatalogQueue {
 
     // Opportunistic, insert-only preparation. Never promotes/retries an existing
     // job, recreates an evicted chapter, or wakes unrelated paused transfers.
-    boolean enqueuePreparation(long currentId,CatalogSource.Title title,CatalogSource.Episode episode) {
-        if (episode.external || episode.id.isEmpty()) return false;
+    int enqueuePreparation(long currentId,CatalogSource.Title title,CatalogSource.Episode episode) {
+        if (episode.external || episode.id.isEmpty()) return PREPARATION_INVALID;
         SQLiteDatabase db=shelf.getWritableDatabase();
         db.beginTransactionNonExclusive();
         try {
             long series=seriesId(db,title);
             ShelfDb.Chapter current=shelf.chapter(currentId);
             if (series<0 || current==null || current.seriesId!=series || current.catalogId.isEmpty()
-                || current.catalogId.equals(episode.id) || savedId(db,series,episode.id)>0) return false;
+                || current.catalogId.equals(episode.id)) return PREPARATION_INVALID;
+            if (savedId(db,series,episode.id)>0) return PREPARATION_EXISTS;
+            // A failed job is deliberately not retried automatically either.
+            try (Cursor cursor=db.rawQuery("SELECT 1 FROM downloads WHERE series_id=? AND episode_id=? LIMIT 1",
+                new String[]{Long.toString(series),episode.id})) {
+                if (cursor.moveToFirst()) return PREPARATION_EXISTS;
+            }
+            // Never interrupt or jump ahead of an existing foreground/background queue.
             try (Cursor cursor=db.rawQuery("SELECT 1 FROM downloads WHERE state<>2 LIMIT 1",null)) {
-                if (cursor.moveToFirst()) return false;
+                if (cursor.moveToFirst()) return PREPARATION_BUSY;
             }
             ContentValues values=new ContentValues();
             values.put("series_id",series);
@@ -97,7 +109,7 @@ final class CatalogQueue {
             values.put("bulk",1);
             boolean added=db.insertWithOnConflict("downloads",null,values,SQLiteDatabase.CONFLICT_IGNORE)>0;
             db.setTransactionSuccessful();
-            return added;
+            return added?PREPARATION_QUEUED:PREPARATION_EXISTS;
         } finally { db.endTransaction(); }
     }
 
