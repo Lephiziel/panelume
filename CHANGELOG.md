@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 (candidate)
+
+- Cache validated page dimensions locally to avoid repeated image-header/PDF-page scans on opening registered chapters.
+- Reuse inspection results from imports and downloads; rebuild missing, invalid or stale indexes automatically.
+- Preserve archive enumeration, page-count checks, rendering and existing backup formats. Reset per-build latency samples.
+
 ## 0.3.1 (preview)
 
 - Bounded ahead-of-viewport tile prefetch while reading an already-open chapter.

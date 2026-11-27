@@ -241,7 +241,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         renderer.execute(() -> {
             MangaDocument document = null;
             try {
-                document = MangaDocument.open(chapter.file(db.root), chapter.format);
+                document = MangaDocument.openRegistered(chapter.file(db.root),chapter.format,chapter.digest,chapter.pages);
                 Bookmark saved = new Bookmark(chapter.bookmark(db.root));
                 MangaDocument loaded = document;
                 main.post(() -> {

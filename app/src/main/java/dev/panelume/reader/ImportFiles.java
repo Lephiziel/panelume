@@ -190,7 +190,7 @@ final class ImportFiles {
             StringBuilder digest = new StringBuilder(64);
             for (byte b : sha) digest.append(String.format(Locale.ROOT, "%02x", b & 255));
             return new Staged(file, name, format, digest.toString(), doc.pages.length,
-                shorten(title, 120), number, guess.title, thumbnail.toByteArray());
+                shorten(title, 120), number, guess.title, thumbnail.toByteArray(),doc.pages);
         }
     }
 
@@ -247,6 +247,10 @@ final class ImportFiles {
             if (!staged.file.renameTo(content)) throw new Fault(R.string.storage_error);
             long result = commit.save(directory);
             committed = true;
+            // Catalogue identities append an episode ID to the archive hash; the index
+            // binds only the hash portion and is rebuilt if the file changes.
+            if (staged.sizes!=null) PageIndex.write(content,staged.format,staged.digest,staged.pages,
+                PageIndex.stamp(content),staged.sizes);
             return result;
         } finally {
             boolean referenced = true;
@@ -296,9 +300,15 @@ final class ImportFiles {
         final String number;
         final String alias;
         final byte[] thumbnail;
+        final MangaDocument.PageSize[] sizes;
 
         Staged(File file, String name, String format, String digest, int pages,
                String guess, String number, String alias, byte[] thumbnail) {
+            this(file,name,format,digest,pages,guess,number,alias,thumbnail,null);
+        }
+
+        Staged(File file, String name, String format, String digest, int pages,
+               String guess, String number, String alias, byte[] thumbnail,MangaDocument.PageSize[] sizes) {
             this.file = file;
             this.name = name;
             this.format = format;
@@ -308,6 +318,7 @@ final class ImportFiles {
             this.number = number;
             this.alias = alias;
             this.thumbnail = thumbnail;
+            this.sizes = sizes==null?null:sizes.clone();
         }
     }
 }

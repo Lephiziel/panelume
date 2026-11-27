@@ -40,7 +40,7 @@ sed '1s/<manifest /<manifest package="dev.panelume.reader.next" /' \
     app/src/main/AndroidManifest.xml > "$work/AndroidManifest.xml"
 "$build_tools/aapt2" link -I "$platform" --manifest "$work/AndroidManifest.xml" \
     --custom-package dev.panelume.reader \
-    --min-sdk-version 26 --target-sdk-version 35 --version-code 17 --version-name 0.3.1 \
+    --min-sdk-version 26 --target-sdk-version 35 --version-code 18 --version-name 0.3.2 \
     -A app/src/main/assets --java "$work/generated" -o "$work/unsigned.apk" "$work/resources.zip"
 mapfile -d '' sources < <(find app/src/main/java "$work/generated" -name '*.java' -print0)
 "${compiler[@]}" -encoding UTF-8 -source 8 -target 8 -bootclasspath "$build_tools/core-lambda-stubs.jar:$platform" \
@@ -57,7 +57,7 @@ if [[ ! -f "$keystore" ]]; then
         -keyalg RSA -keysize 2048 -validity 10000
 fi
 "$build_tools/apksigner" sign --ks "$keystore" --ks-key-alias androiddebugkey \
-    --ks-pass pass:android --key-pass pass:android --out "$work/Panelume-0.3.1.apk" "$work/aligned.apk"
-"$build_tools/apksigner" verify "$work/Panelume-0.3.1.apk"
-mv "$work/Panelume-0.3.1.apk" "$out/"
-printf '%s\n' "$out/Panelume-0.3.1.apk"
+    --ks-pass pass:android --key-pass pass:android --out "$work/Panelume-0.3.2.apk" "$work/aligned.apk"
+"$build_tools/apksigner" verify "$work/Panelume-0.3.2.apk"
+mv "$work/Panelume-0.3.2.apk" "$out/"
+printf '%s\n' "$out/Panelume-0.3.2.apk"

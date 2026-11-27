@@ -20,7 +20,7 @@ final class ShelfDb extends SQLiteOpenHelper {
     private static final String CHAPTERS =
         "SELECT c.id,c.series_id,s.title,c.number_text,c.source,c.directory,c.format,c.pages,c.opened,c.done,"
             + "COALESCE((SELECT SUM(d.ms) FROM reading_day d WHERE d.chapter_id=c.id),0)"
-            + ",c.catalog_id,s.catalog_provider,c.caption,c.credit"
+            + ",c.catalog_id,s.catalog_provider,c.caption,c.credit,c.digest"
             + " FROM chapters c JOIN series s ON s.id=c.series_id";
 
     final File root;
@@ -132,7 +132,7 @@ final class ShelfDb extends SQLiteOpenHelper {
                 chapters.add(new Chapter(cursor.getLong(0), cursor.getLong(1), cursor.getString(2),
                     cursor.getString(3), cursor.getString(4), cursor.getString(5), cursor.getString(6),
                     cursor.getInt(7), cursor.getLong(8), cursor.getInt(9) == 1, cursor.getLong(10),
-                    cursor.getString(11), cursor.getString(12), cursor.getString(13), cursor.getString(14)));
+                    cursor.getString(11), cursor.getString(12), cursor.getString(13), cursor.getString(14),cursor.getString(15)));
             }
         }
         return chapters;
@@ -385,10 +385,11 @@ final class ShelfDb extends SQLiteOpenHelper {
         final String provider;
         final String caption;
         final String credit;
+        final String digest;
 
         Chapter(long id, long seriesId, String title, String number, String source, String directory,
                 String format, int pages, long opened, boolean done, long ms,
-                String catalogId, String provider, String caption, String credit) {
+                String catalogId, String provider, String caption, String credit,String digest) {
             this.id = id;
             this.seriesId = seriesId;
             this.title = title;
@@ -404,6 +405,7 @@ final class ShelfDb extends SQLiteOpenHelper {
             this.provider = provider;
             this.caption = caption;
             this.credit = credit;
+            this.digest = digest;
         }
 
         File file(File root) {

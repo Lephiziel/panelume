@@ -27,11 +27,11 @@ final class OpenMetrics {
         StringBuilder next=new StringBuilder();
         for (int i=start;i<previous.length;i++) next.append(previous[i]).append(',');
         next.append(elapsed);
-        prefs.edit().putString("samples_031_"+type,next.toString()).apply();
+        prefs.edit().putString("samples_032_"+type,next.toString()).apply();
     }
 
     private static long[] samples(SharedPreferences prefs,int type) {
-        String raw=prefs.getString("samples_031_"+type,"");
+        String raw=prefs.getString("samples_032_"+type,"");
         if (raw.isEmpty() || raw.length()>WINDOW*9) return new long[0];
         String[] parts=raw.split(",");
         if (parts.length>WINDOW) return new long[0];
