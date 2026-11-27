@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3 (candidate)
+
+- Prioritize requested chapters over in-flight bulk downloads at image boundaries.
+- Keep interrupted bulk jobs queued; incomplete archives are discarded and restarted later.
+- Respect promotion of an already-running job without duplicating it or retaining stale bulk network restrictions.
+- No schema migration; reset per-build latency samples.
+
 ## 0.3.2 (preview)
 
 - Cache validated page dimensions locally to avoid repeated image-header/PDF-page scans on opening registered chapters.

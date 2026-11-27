@@ -12,7 +12,7 @@ import java.util.function.Predicate;
 import javax.net.ssl.HttpsURLConnection;
 
 class CatalogHttp {
-    static final String AGENT = "Panelume/0.3.2 (Android comic reader)";
+    static final String AGENT = "Panelume/0.3.3 (Android comic reader)";
     private static final int TEXT_LIMIT = 8 * 1024 * 1024;
 
     String text(String address, String accept, Predicate<String> allowed) throws IOException {

@@ -72,6 +72,12 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Bounded, versioned, checksummed optional sidecar tied to registered archive hash, format, length, modification time and page count. Missing, invalid or stale entries fall back to full page inspection. ZIP entry enumeration and PDF page-count checks remain.
 - Cache is not a replacement for content integrity verification; private archives are immutable under normal app operations. No DB or backup-format migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.2): 36 regression tests passed. Physical-device speed measurements remain open. Next: prioritize user-requested downloads.
 
+## 0.3.3 candidate — interactive download priority
+
+- Yield an in-flight bulk transfer between images when a queued interactive request exists, retaining the bulk job and restarting its incomplete archive later.
+- Promoting the current job preserves its progress and updates its network mode; never preempt another interactive transfer or a completed archive.
+- No additional workers or schema migration. Partial archive reuse and real-device latency/bandwidth measurements remain open.
+
 ## Priorities
 
 | Stage | What readers can expect us to work on |
