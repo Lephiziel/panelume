@@ -68,6 +68,8 @@ public final class PreferencesActivity extends PanelumeActivity {
             Ui.gap(page, 14);
             wifi(page);
             Ui.gap(page, 10);
+            nextPreparation(page);
+            Ui.gap(page, 10);
             Ui.add(page, Ui.button(this, getString(R.string.downloads_controls), false,
                 () -> startActivity(new Intent(this, DownloadsActivity.class))), Ui.FILL, Ui.WRAP);
             Ui.gap(page, 8);
@@ -137,6 +139,22 @@ public final class PreferencesActivity extends PanelumeActivity {
             }
         });
         Ui.add(page, row, Ui.FILL, Ui.WRAP);
+    }
+
+    private void nextPreparation(LinearLayout page) {
+        LinearLayout setting=Ui.column(this);
+        setting.setBackground(Ui.card(this,Ui.SURFACE,8));
+        Ui.pad(setting,14,10,14,13);
+        Switch toggle=new Switch(this);
+        toggle.setText(R.string.prepare_next);
+        toggle.setTextColor(Ui.TEXT);
+        toggle.setTextSize(15);
+        toggle.setMinHeight(Ui.dp(this,44));
+        toggle.setChecked(Prefs.prepareNext(this));
+        toggle.setOnCheckedChangeListener((button,checked)->Prefs.prepareNext(this,checked));
+        Ui.add(setting,toggle,Ui.FILL,Ui.WRAP);
+        Ui.add(setting,Ui.label(this,getString(R.string.prepare_next_detail),13,Ui.MUTED),Ui.FILL,Ui.WRAP);
+        Ui.add(page,setting,Ui.FILL,Ui.WRAP);
     }
 
     private void wifi(LinearLayout page) {

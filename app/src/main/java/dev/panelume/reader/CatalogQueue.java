@@ -73,6 +73,34 @@ final class CatalogQueue {
         }
     }
 
+    // Opportunistic, insert-only preparation. Never promotes/retries an existing
+    // job, recreates an evicted chapter, or wakes unrelated paused transfers.
+    boolean enqueuePreparation(long currentId,CatalogSource.Title title,CatalogSource.Episode episode) {
+        if (episode.external || episode.id.isEmpty()) return false;
+        SQLiteDatabase db=shelf.getWritableDatabase();
+        db.beginTransactionNonExclusive();
+        try {
+            long series=seriesId(db,title);
+            ShelfDb.Chapter current=shelf.chapter(currentId);
+            if (series<0 || current==null || current.seriesId!=series || current.catalogId.isEmpty()
+                || current.catalogId.equals(episode.id) || savedId(db,series,episode.id)>0) return false;
+            try (Cursor cursor=db.rawQuery("SELECT 1 FROM downloads WHERE state<>2 LIMIT 1",null)) {
+                if (cursor.moveToFirst()) return false;
+            }
+            ContentValues values=new ContentValues();
+            values.put("series_id",series);
+            values.put("episode_id",episode.id);
+            values.put("number",episode.number);
+            values.put("caption",episode.name);
+            values.put("url",episode.url);
+            values.put("credit",episode.credit);
+            values.put("bulk",1);
+            boolean added=db.insertWithOnConflict("downloads",null,values,SQLiteDatabase.CONFLICT_IGNORE)>0;
+            db.setTransactionSuccessful();
+            return added;
+        } finally { db.endTransaction(); }
+    }
+
     long seriesId(CatalogSource.Title title) {
         return seriesId(shelf.getReadableDatabase(), title);
     }

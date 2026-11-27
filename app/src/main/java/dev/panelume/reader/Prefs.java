@@ -60,6 +60,14 @@ final class Prefs {
         return mask == 0 || editor.commit();
     }
 
+    static boolean prepareNext(Context context) {
+        return values(context).getBoolean("prepare_next",false);
+    }
+
+    static void prepareNext(Context context,boolean enabled) {
+        values(context).edit().putBoolean("prepare_next",enabled).apply();
+    }
+
     static boolean unmetered(Context context) {
         return values(context).getBoolean("unmetered", true);
     }

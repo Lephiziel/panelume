@@ -249,4 +249,8 @@
     <string name="offline_refresh">Refresh storage</string>
     <string name="open_metrics_distribution">%1$s: last %2$.2f s · median %3$.2f s · n=%4$d</string>
     <string name="download_priority_waiting">Priority download · queued</string>
+    <string name="prepare_next">Prepare next chapter</string>
+    <string name="prepare_next_detail">Near the end of reading, try downloading one following catalogue chapter if the queue is idle. Uses the series download network setting and may use storage and data. Off by default; existing downloads can be cancelled in Downloads.</string>
+    <string name="next_saved_chapter">Next saved chapter</string>
+    <string name="next_open_catalogue">Open chapter list</string>
 </resources>

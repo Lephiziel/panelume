@@ -251,4 +251,8 @@
     <string name="offline_refresh">Обновить хранилище</string>
     <string name="open_metrics_distribution">%1$s: последнее %2$.2f с · медиана %3$.2f с · n=%4$d</string>
     <string name="download_priority_waiting">Приоритетная загрузка · в очереди</string>
+    <string name="prepare_next">Подготавливать следующую главу</string>
+    <string name="prepare_next_detail">Ближе к концу чтения приложение попробует скачать одну следующую главу из каталога, если очередь свободна. Учитываются настройки сети для загрузки тайтлов; расходуются память и трафик. По умолчанию выключено. Уже поставленные загрузки можно отменить в разделе загрузок.</string>
+    <string name="next_saved_chapter">Следующая сохранённая глава</string>
+    <string name="next_open_catalogue">Открыть список глав</string>
 </resources>
