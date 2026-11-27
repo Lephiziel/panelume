@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <small>Latest preview: <a href="https://github.com/Lephiziel/panelume/releases/tag/v0.3.5">Panelume 0.3.5</a> (pre-release; stable download remains 0.2.9).</small>
+  <small>Latest preview: <a href="https://github.com/Lephiziel/panelume/releases/tag/v0.3.6">Panelume 0.3.6</a> (pre-release; stable download remains 0.2.9).</small>
 </p>
 
 <p align="center">

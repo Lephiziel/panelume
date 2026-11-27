@@ -92,17 +92,17 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Distinguish queued, already-present/failed/evicted, busy and invalid successor states. Never auto-retry failed or intentionally evicted chapters.
 - No DB migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.5): 44 regression tests passed; the original signing certificate and application ID are preserved. Real-device metered/unmetered transitions and queue contention remain to be tested.
 
-## 0.3.6 candidate — quick chapter navigation from the reader
+## 0.3.6 preview — quick chapter navigation from the reader
 
 - Add a chapter-list shortcut to the reader toolbar for catalogue-backed chapters. Reuse the existing catalogue screen and return to the same series.
 - Clear the current reader from the activity stack before showing the catalogue; if a catalogue is already present, refresh it with the same title rather than stacking readers/catalogues.
-- Preserve the current bookmark before leaving. Manual/imported chapters keep their existing toolbar unchanged. No DB or backup migration.
+- Preserve the current bookmark before leaving. Manual/imported chapters keep their existing toolbar unchanged. No DB or backup migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.6): 45 regression tests passed; the original signing certificate and application ID are preserved.
 
 ## Priorities
 
 | Stage | What readers can expect us to work on |
 | :-- | :-- |
-| **Now** | P0: validate 0.3.4 next-chapter preparation on physical devices; verify the 0.2.6 zoom hotfix (cross the old 1.25× boundary repeatedly, pan, reset, resume); test upgrades, bookmarks, offline chapters, download cancellation and interrupted retries across Android versions. |
+| **Now** | P0: validate 0.3.4–0.3.6 reader/download/navigation features on physical devices; verify the 0.2.6 zoom hotfix (cross the old 1.25× boundary repeatedly, pan, reset, resume); test upgrades, bookmarks, offline chapters, download cancellation and interrupted retries across Android versions. |
 | **Next** | Collect pilot first-panel latency, live catalogue availability and next-chapter preparation results. Decide whether online streaming is justified only after measuring the current download-to-first-panel path. |
 | **After that** | Complete physical-device verification of portable library restore (0.2.10–0.2.11 previews) and offline storage eviction/restore (0.2.12–0.2.13 previews); fix any recovery regressions before promoting a newer stable release. |
 | **Exploring** | A right-to-left page mode for manga, faster online chapter opening and better ways to move between chapters. |

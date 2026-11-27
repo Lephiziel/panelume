@@ -59,4 +59,6 @@ Enable preparation, pass 75%, then simulate a temporary catalogue failure and co
 
 ## Reader chapter navigator (0.3.6)
 
+The signed preview is published at [v0.3.6](https://github.com/Lephiziel/panelume/releases/tag/v0.3.6). CI reports 45 tests, with zero failures or skips; this is not a substitute for physical-device testing.
+
 Open a catalogue-backed chapter and tap the new chapters icon in the reader toolbar. Confirm the catalogue opens for the same series, the current reader is removed from the stack, and selecting another chapter opens at its own saved position. Repeat when the catalogue is already lower in the activity stack for the same and a different title, and when the reader was launched from Downloads rather than Catalog. Check manual/imported chapters show no shortcut, toolbar accessibility labels, back navigation, process recreation and bookmark retention. No physical-device results yet.
