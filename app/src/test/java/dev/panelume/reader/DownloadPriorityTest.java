@@ -44,6 +44,27 @@ public final class DownloadPriorityTest {
         }
     }
 
+    @Test public void onlyQueuedForegroundWorkCanPreempt() throws Exception {
+        Context context=RuntimeEnvironment.getApplication();
+        try (TestShelf fixture=new TestShelf(context)) {
+            CatalogQueue q=new CatalogQueue(fixture.shelf);
+            q.enqueue(TITLE,Collections.singletonList(episode("2")),false);
+            CatalogQueue.Job foreground=q.next(false);
+            q.fail(foreground.id,CatalogQueue.NETWORK);
+            q.enqueue(TITLE,Collections.singletonList(episode("1")),true);
+            CatalogQueue.Job bulk=q.next(true);
+            assertNotNull(bulk);
+            assertTrue(bulk.bulk);
+            assertFalse(q.yieldToInteractive(bulk.id));
+            q.retry(foreground.id);
+            assertTrue(q.yieldToInteractive(bulk.id));
+            assertEquals(foreground.id,q.next(false).id);
+            q.cancel(foreground.id);
+            assertNull(q.next(false));
+            assertEquals(bulk.id,q.next(true).id);
+        }
+    }
+
     @Test public void promotionDoesNotPreemptOrDuplicateCurrentDownload() throws Exception {
         Context context=RuntimeEnvironment.getApplication();
         try (TestShelf fixture=new TestShelf(context)) {

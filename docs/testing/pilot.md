@@ -40,3 +40,7 @@ Compare 0.3.0 and 0.3.1 using identical long CBZ and PDF chapters on disposable 
 ## Page index comparison (0.3.2)
 
 Use a real long CBZ and PDF on disposable profiles. Compare 0.3.1 and 0.3.2, recording cold index miss and subsequent index hits separately; test imported and freshly downloaded files. Delete only the derived page-index sidecar in a test profile and verify opening still works and positions match. Repeat with a truncated sidecar and a restored ZIP backup (index absent). Record first-panel latency, page count, position and errors. No device measurements yet.
+
+## Interactive priority (0.3.3)
+
+On an unmetered network start a long bulk download and wait until at least one page has arrived. Tap another chapter: at the next safe image boundary, the bulk job must return to the queue with its partial archive removed, and the interactive chapter must start before any queued bulk job. After completion the original job may restart from page one. Tap the currently running bulk chapter in a separate run: it must continue without restarting or duplicating. Repeat with a metered network, bulk downloads disallowed, and an explicit chapter request; queued bulk jobs must stay blocked. Record wait time, bytes retransferred, failures and progress before and after restart. Also test cancellation, process death, offline use and bookmark retention. No physical-device results yet.

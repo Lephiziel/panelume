@@ -250,5 +250,5 @@
     <string name="offline_remove_result">Удалено: %1$d · изменились/пропущены: %2$d · ошибки: %3$d. Удалено архивов на %4$s. История чтения сохранена.</string>
     <string name="offline_refresh">Обновить хранилище</string>
     <string name="open_metrics_distribution">%1$s: последнее %2$.2f с · медиана %3$.2f с · n=%4$d</string>
-    <string name="download_priority_waiting">Приоритетная загрузка · ожидание текущего изображения</string>
+    <string name="download_priority_waiting">Приоритетная загрузка · в очереди</string>
 </resources>
