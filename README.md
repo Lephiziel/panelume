@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  <small>Latest preview: <a href="https://github.com/Lephiziel/panelume/releases/tag/v0.3.4">Panelume 0.3.4</a> (pre-release; stable download remains 0.2.9).</small>
+</p>
+
+<p align="center">
   <strong>Ad-free</strong> · Android 8.0+ · English and Russian
 </p>
 

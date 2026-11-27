@@ -78,20 +78,20 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Promoting the current job preserves its progress and updates its network mode; never preempt another interactive transfer or a completed archive.
 - [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.3): 39 regression tests passed. No additional workers or schema migration. Partial archive reuse and real-device latency/bandwidth measurements remain open. Next: optional automatic preparation of the next chapter.
 
-## 0.3.4 candidate — optional next-chapter preparation
+## 0.3.4 preview — optional next-chapter preparation
 
 - Opt-in, off by default. After 75% of visible/contiguous reading, resolve exactly the next item in the current catalogue feed; never skip an external entry or guess when identity is ambiguous.
 - Queue at most one new bulk job when the queue is idle and the configured network policy permits it. Do not retry failed jobs or restore intentionally evicted archives automatically.
 - End card rechecks the saved successor and opens it directly when available; otherwise offer explicit download or the catalogue list. With no feed, label the next local entry as the next saved chapter.
-- No DB or backup migration. Device-local opt-in is not restored from backups. Real-device navigation, network usage and latency remain unverified.
+- No DB or backup migration. Device-local opt-in is not restored from backups. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.4): 43 regression tests passed; the original signing certificate and application ID are preserved. Real-device navigation, network usage and latency remain unverified.
 
 ## Priorities
 
 | Stage | What readers can expect us to work on |
 | :-- | :-- |
-| **Now** | P0: verify the zoom hotfix on real devices (cross the old 1.25× boundary repeatedly, pan, reset, and resume a chapter); verify upgrades, bookmarks and offline chapters across Android versions. Validate the new download status and cancellation controls; check interrupted downloads and retries. |
-| **Next** | Validate the first-chapter improvements shipped in 0.2.6 with pilot readers, collect live catalogue checks and pilot first-panel measurements before deciding whether streaming is needed. |
-| **After that** | Add previewed, idempotent restore of reading progress, including clean-install recovery. Make it easier to see and manage what is saved offline. |
+| **Now** | P0: validate 0.3.4 next-chapter preparation on physical devices; verify the 0.2.6 zoom hotfix (cross the old 1.25× boundary repeatedly, pan, reset, resume); test upgrades, bookmarks, offline chapters, download cancellation and interrupted retries across Android versions. |
+| **Next** | Collect pilot first-panel latency, live catalogue availability and next-chapter preparation results. Decide whether online streaming is justified only after measuring the current download-to-first-panel path. |
+| **After that** | Complete physical-device verification of portable library restore (0.2.10–0.2.11 previews) and offline storage eviction/restore (0.2.12–0.2.13 previews); fix any recovery regressions before promoting a newer stable release. |
 | **Exploring** | A right-to-left page mode for manga, faster online chapter opening and better ways to move between chapters. |
 
 Timing depends on testing and reader feedback. If you try Panelume, tell us where you got stuck or what would make you use it again. [Reader feedback](https://github.com/Lephiziel/panelume/issues/1) · [Report a bug or suggest a feature](https://github.com/Lephiziel/panelume/issues/new/choose)

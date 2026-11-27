@@ -47,4 +47,6 @@ On an unmetered network start a long bulk download and wait until at least one p
 
 ## Next chapter preparation (0.3.4)
 
+The signed preview is published at [v0.3.4](https://github.com/Lephiziel/panelume/releases/tag/v0.3.4). CI reports 43 tests, with zero failures or skips; this is not a substitute for physical-device testing.
+
 In a disposable profile, enable the new option, open a downloadable catalogue chapter, read contiguously past 75% and verify at most one following chapter is queued when idle. Repeat with the option off, metered network blocked, a paused queue, a failed job, a previously evicted successor, an external successor and the final chapter. Confirm no automatic duplicate or retry. Tap the end card after the download completes and verify the actual next chapter opens at its own saved position. Also test navigating away during catalogue lookup and process restart. Record actual wait time and network bytes. No device results yet.
