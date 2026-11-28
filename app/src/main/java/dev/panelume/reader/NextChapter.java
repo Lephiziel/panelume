@@ -8,8 +8,10 @@ final class NextChapter {
     static boolean canPrepare(int percent,boolean eligible,boolean enabled,boolean networkAllowed) {
         return percent>=THRESHOLD && eligible && enabled && networkAllowed;
     }
-    static boolean readyToPrepare(int percent,double frontier,int pages,boolean allRendered) {
-        return allRendered && pages>0 && percent>=THRESHOLD && frontier>=pages*(THRESHOLD/100.0);
+    // Prefetch is opt-in and not evidence of reading completion. Use the visible
+    // scroll position, not page-count frontier (pages may have very different heights).
+    static boolean readyToPrepare(int percent,boolean anyRendered) {
+        return anyRendered && percent>=THRESHOLD;
     }
     static Successor after(List<CatalogSource.Episode> feed,String current) {
         if (current==null || current.isEmpty()) return null;

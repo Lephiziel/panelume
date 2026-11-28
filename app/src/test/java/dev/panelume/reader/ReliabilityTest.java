@@ -93,6 +93,23 @@ public final class ReliabilityTest {
         assertTrue(pages.get(0).endsWith("one.jpg"));
     }
 
+    @Test public void atsumaruGroupsNormalizedNumbersAndKeepsExistingIdentity() throws Exception {
+        AtsumaruSource source = new AtsumaruSource(new FixtureHttp());
+        String body = "{\"chapters\":[{\"id\":\"zz\",\"number\":\"1.0\"},{\"id\":\"aa\",\"number\":1},"
+            + "{\"id\":\"cc\",\"number\":\"2.5\"},{\"id\":\"bb\",\"number\":\"2.50\"},{\"id\":\"dd\",\"number\":10}]}";
+        List<CatalogSource.Episode> canonical=source.chapterList(body,"demo");
+        assertEquals(3,canonical.size());
+        assertEquals("demo/aa",canonical.get(0).id);
+        assertEquals("2.5",canonical.get(1).number);
+        assertEquals("10",canonical.get(2).number);
+        List<CatalogSource.Episode> preferred=source.chapterList(body,"demo",
+            Arrays.asList("demo/zz","demo/cc"));
+        assertEquals(3,preferred.size());
+        assertEquals("demo/zz",preferred.get(0).id);
+        assertEquals("demo/cc",NextChapter.after(preferred,"demo/zz").episode.id);
+        assertEquals("demo/dd",NextChapter.after(preferred,"demo/cc").episode.id);
+    }
+
     @Test public void archiveRejectsRestrictedMetadata() throws Exception {
         FixtureHttp http = new FixtureHttp().add("https://archive.org/metadata/demo",
             "{\"metadata\":{\"rights\":\"public domain\",\"imagecount\":2}}");
