@@ -108,6 +108,11 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Fix next-chapter preparation/navigation and duplicate Atsumaru chapter numbers following the OnePlus 10 Pro report (10/11 manual scenarios passed on 0.3.6).
 - Preserve existing chapter identity where possible; no destructive migration. Both build and emulator workflows passed for the fix PR; candidate release checks, signing and physical retest remain pending. Latest published preview remains 0.3.6; stable remains 0.2.9.
 
+## Cross-version runtime recovery — candidate
+
+- Extend emulator coverage to Android 9 and Android 15, using generated real CBZ archives for eviction, portable restore and same-layout re-download. Verify changed page counts are refused without losing history, and local imports remain protected.
+- Both emulator runs must pass; physical-device clean-install and signed-upgrade validation remain open.
+
 ## Priorities
 
 | Stage | What readers can expect us to work on |

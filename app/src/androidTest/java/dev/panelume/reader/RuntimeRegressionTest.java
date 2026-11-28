@@ -31,14 +31,23 @@ public final class RuntimeRegressionTest {
         @Override public void close() {
             shelf.close();
             context.deleteDatabase(name);
+            // The test root contains registered chapter subdirectories. Never touch
+            // the app's production chapter root.
+            File[] directories=root.listFiles();
+            if (directories!=null) for (File directory:directories) {
+                if (directory.isDirectory()) ImportFiles.removeDirectory(directory);
+                else directory.delete();
+            }
             ImportFiles.removeDirectory(root);
         }
     }
 
-    private static File cbz() throws IOException {
+    private static File cbz() throws IOException { return cbz(3); }
+
+    private static File cbz(int pages) throws IOException {
         File file=File.createTempFile("runtime-", ".cbz",context().getCacheDir());
         try (ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(file))) {
-            for (int i=0;i<3;i++) {
+            for (int i=0;i<pages;i++) {
                 Bitmap bitmap=Bitmap.createBitmap(240,800+i*100,Bitmap.Config.ARGB_8888);
                 bitmap.eraseColor(i==0?Color.RED:i==1?Color.GREEN:Color.BLUE);
                 try {
@@ -95,6 +104,91 @@ public final class RuntimeRegressionTest {
         assertEquals(1.25,position.frontier,.00001);
         assertTrue(chapter.done);
         assertEquals(1700L,chapter.ms);
+    }
+
+    private static final CatalogSource.Title CATALOG = new CatalogSource.Title(
+        "xkcd","runtime-fixture","Runtime catalogue","https://xkcd.com/","","");
+    private static final CatalogSource.Episode EPISODE = new CatalogSource.Episode(
+        "1","1","Chapter 1","https://xkcd.com/1/","",false);
+
+    private static long saveCatalogue(ShelfDb shelf, int pages) throws Exception {
+        File file=cbz(pages);
+        try {
+            ImportFiles.Staged staged=ImportFiles.inspectArchive(file,"Runtime catalogue.cbz");
+            assertEquals(pages,staged.pages);
+            CatalogQueue queue=new CatalogQueue(shelf);
+            queue.enqueue(CATALOG,Collections.singletonList(EPISODE),false);
+            CatalogQueue.Job job=queue.next(false);
+            assertNotNull(job);
+            return ImportFiles.store(shelf,staged,dir -> queue.save(job,staged,dir));
+        } finally {file.delete();}
+    }
+
+    @Test public void evictedCatalogueSurvivesPortableRestoreAndRedownload() throws Exception {
+        try(Fixture source=new Fixture(); Fixture target=new Fixture()) {
+            long id=saveCatalogue(source.shelf,3);
+            ShelfDb.Chapter chapter=source.shelf.chapter(id);
+            Bookmark position=new Bookmark(chapter.bookmark(source.root));
+            position.save(1,.25,42,1.25);
+            position.flush();
+            source.shelf.opened(id);
+            source.shelf.finish(id);
+            source.shelf.addTime(id,Collections.singletonMap(LocalDate.of(2026,11,28),1700L));
+            ShelfDb.Chapter local=addCbz(source);
+            long archiveBytes=chapter.file(source.root).length();
+            OfflineStorage.Report before=OfflineStorage.scan(source.shelf);
+            assertEquals(2,before.ready);
+            assertEquals(archiveBytes,before.reclaimable);
+            OfflineStorage.Candidate selected=null;
+            for (OfflineStorage.Entry entry:before.series)
+                for (OfflineStorage.Candidate candidate:entry.candidates)
+                    if(candidate.id==id) selected=candidate;
+            assertNotNull(selected);
+            assertNotNull(source.shelf.acquireReader(id));
+            try {
+                assertEquals(1,OfflineStorage.evict(source.shelf,Collections.singletonList(selected)).failed);
+                assertTrue(chapter.available(source.root));
+            } finally {source.shelf.releaseReader(id);}
+            OfflineStorage.Result removed=OfflineStorage.evict(source.shelf,Collections.singletonList(selected));
+            assertEquals(1,removed.removed);
+            assertEquals(archiveBytes,removed.bytes);
+            assertFalse(chapter.available(source.root));
+            assertPosition(source.shelf,source.shelf.chapter(id));
+            assertTrue(local.available(source.root));
+            ByteArrayOutputStream output=new ByteArrayOutputStream();
+            LibraryBackup.write(context(),source.shelf,output);
+            byte[] zip=output.toByteArray();
+            LibraryBackup.Preview preview=LibraryBackup.preview(new ByteArrayInputStream(zip));
+            assertEquals(2,preview.chapters);
+            assertEquals(1,preview.missing);
+            LibraryBackup.restore(target.shelf,new ByteArrayInputStream(zip),preview);
+            ShelfDb.Chapter restored=target.shelf.chapter(id);
+            assertNotNull(restored);
+            assertFalse(restored.available(target.root));
+            assertTrue(target.shelf.cover(restored.directory).isFile());
+            assertPosition(target.shelf,restored);
+            assertTrue(target.shelf.chapter(local.id).available(target.root));
+            try {
+                saveCatalogue(target.shelf,2);
+                fail("Changed page count accepted");
+            } catch(Fault expected) {assertEquals(R.string.offline_chapter_changed,expected.message);}
+            assertPosition(target.shelf,target.shelf.chapter(id));
+            assertFalse(target.shelf.chapter(id).available(target.root));
+            CatalogQueue queue=new CatalogQueue(target.shelf);
+            CatalogQueue.Job interrupted=queue.jobs(restored.seriesId).get(0);
+            queue.cancel(interrupted.id);
+            assertEquals(id,saveCatalogue(target.shelf,3));
+            ShelfDb.Chapter downloaded=target.shelf.chapter(id);
+            assertPosition(target.shelf,downloaded);
+            assertTrue(downloaded.available(target.root));
+            assertEquals(1,target.shelf.chapters(restored.seriesId).size());
+            assertTrue(queue.jobs(restored.seriesId).isEmpty());
+            try(MangaDocument document=MangaDocument.openRegistered(downloaded.file(target.root),
+                    downloaded.format,downloaded.digest,downloaded.pages)) {
+                assertTile(document,1,Color.GREEN);
+            }
+            assertTrue(target.shelf.chapter(local.id).available(target.root));
+        }
     }
 
     @Test public void actualCbzRenderAndPersistentIndex() throws Exception {

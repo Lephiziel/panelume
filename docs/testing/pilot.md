@@ -77,3 +77,8 @@ Two failures/observations: after enabling next-chapter preparation and reading S
 ## 0.3.7 candidate retest
 
 Install only the original-certificate-signed candidate over 0.3.6. On Wi-Fi with an idle queue, enable next-chapter preparation, open an available Solo Leveling chapter and scroll beyond 75%; verify exactly one subsequent chapter is prepared. At the end, confirm the next chapter opens or is explicitly downloaded, not a duplicate chapter number. Repeat with preparation disabled (navigation should still resolve without speculative downloads). In Atsumaru, verify numeric order, one row per normalized number, existing downloads/positions and decimal chapters; do not delete duplicate archives to force a pass. Record source, exact Android build, network and observed results. No physical retest results yet.
+
+
+## Cross-version runtime and offline recovery (candidate)
+
+The runtime workflow now targets API 28 and 35. A new native test creates valid CBZ images, records progress, verifies active-reader protection, evicts a catalogue archive without deleting history, restores a portable ZIP into a fresh isolated database, rejects re-download with a changed page count, then registers a matching-layout replacement and renders it. Local imported chapters must remain available. Synthetic downloads do not test live sources, and the isolated database is not a signed APK upgrade. Inspect both emulator jobs before recording a pass.
