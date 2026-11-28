@@ -15,6 +15,10 @@ concurrency:
 jobs:
   emulator:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [28, 35]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +42,7 @@ jobs:
       - name: Run Android runtime tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.api }}
           arch: x86_64
           target: google_apis
           disable-animations: true
@@ -48,7 +52,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: panelume-runtime-reports
+          name: panelume-runtime-reports-api-${{ matrix.api }}
           path: |
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/
