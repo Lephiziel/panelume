@@ -53,14 +53,15 @@ public final class RuntimeRegressionTest {
 
     private static File pdf() throws IOException {
         File file=File.createTempFile("runtime-", ".pdf",context().getCacheDir());
-        try (PdfDocument document=new PdfDocument();FileOutputStream out=new FileOutputStream(file)) {
+        PdfDocument document=new PdfDocument();
+        try (FileOutputStream out=new FileOutputStream(file)) {
             for (int i=0;i<2;i++) {
                 PdfDocument.Page page=document.startPage(new PdfDocument.PageInfo.Builder(300,600,i+1).create());
                 page.getCanvas().drawColor(i==0?Color.RED:Color.BLUE);
                 document.finishPage(page);
             }
             document.writeTo(out);
-        }
+        } finally { document.close(); }
         return file;
     }
 
