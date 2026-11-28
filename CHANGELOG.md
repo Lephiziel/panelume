@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.7 (candidate; not yet released)
+
+- Fix opt-in next-chapter preparation to use visible scroll progress and re-arm cooldown after pause/resume. Resolve next-chapter navigation independently of bulk-download preferences.
+- Collapse duplicate Atsumaru chapter numbers, preferring explicit, saved and queued release identities. Existing archives and reading progress are not deleted or migrated.
+- Add persistent queue and cancelled registration tests plus native Android 15 CBZ/PDF rendering and backup restore checks.
+- No database or application ID change. Physical retest and original-key release signing remain pending.
+
 ## 0.3.6 (preview)
 
 - Add a chapter-list shortcut to the reader toolbar for catalogue-backed chapters.

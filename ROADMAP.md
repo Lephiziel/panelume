@@ -98,16 +98,21 @@ Panelume is an ad-free Android reader for manhwa, manga, manhua, webtoons and co
 - Clear the current reader from the activity stack before showing the catalogue; if a catalogue is already present, refresh it with the same title rather than stacking readers/catalogues.
 - Preserve the current bookmark before leaving. Manual/imported chapters keep their existing toolbar unchanged. No DB or backup migration. [Signed preview](https://github.com/Lephiziel/panelume/releases/tag/v0.3.6): 45 regression tests passed; the original signing certificate and application ID are preserved.
 
-## Android runtime validation — candidate
+## Android runtime validation — merged
 
 - Add an API 35 emulator workflow and instrumented regression tests for real CBZ/PDF rendering, portable library restore, damaged archive rejection, and bookmark/statistics persistence. No release version or production database changes.
-- Record actual emulator outcomes separately from physical-device and signed-upgrade validation. Do not mark the preview stable merely because JVM tests passed.
+- Three native runtime tests passed on API 35 in [CI](https://github.com/Lephiziel/panelume/actions/runs/46121440214). Queue recovery and cancellation coverage merged. Physical-device and signed-upgrade validation remain separate.
+
+## 0.3.7 candidate — device QA fixes
+
+- Fix next-chapter preparation/navigation and duplicate Atsumaru chapter numbers following the OnePlus 10 Pro report (10/11 manual scenarios passed on 0.3.6).
+- Preserve existing chapter identity where possible; no destructive migration. Both build and emulator workflows passed for the fix PR; candidate release checks, signing and physical retest remain pending. Latest published preview remains 0.3.6; stable remains 0.2.9.
 
 ## Priorities
 
 | Stage | What readers can expect us to work on |
 | :-- | :-- |
-| **Now** | P0: validate 0.3.4–0.3.6 reader/download/navigation features on physical devices; verify the 0.2.6 zoom hotfix (cross the old 1.25× boundary repeatedly, pan, reset, resume); test upgrades, bookmarks, offline chapters, download cancellation and interrupted retries across Android versions. |
+| **Now** | P0: re-test next-chapter preparation and Atsumaru deduplication on 0.3.7; extend physical-device coverage beyond the initial OnePlus 10 Pro checks, especially signed upgrades, offline reading and interrupted downloads. |
 | **Next** | Collect pilot first-panel latency, live catalogue availability and next-chapter preparation results. Decide whether online streaming is justified only after measuring the current download-to-first-panel path. |
 | **After that** | Complete physical-device verification of portable library restore (0.2.10–0.2.11 previews) and offline storage eviction/restore (0.2.12–0.2.13 previews); fix any recovery regressions before promoting a newer stable release. |
 | **Exploring** | A right-to-left page mode for manga, faster online chapter opening and better ways to move between chapters. |
