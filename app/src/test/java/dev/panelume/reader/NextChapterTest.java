@@ -36,11 +36,11 @@ public final class NextChapterTest {
         assertFalse(NextChapter.canPrepare(75,true,true,false));
     }
 
-    @Test public void thresholdNeedsRenderedContiguousProgress() {
-        assertFalse(NextChapter.readyToPrepare(74,9,10,true));
-        assertFalse(NextChapter.readyToPrepare(90,2,10,true));
-        assertFalse(NextChapter.readyToPrepare(90,9,10,false));
-        assertTrue(NextChapter.readyToPrepare(75,7.5,10,true));
+    @Test public void preparationUsesVisibleScrollProgressNotPageCount() {
+        assertFalse(NextChapter.readyToPrepare(74,true));
+        assertFalse(NextChapter.readyToPrepare(90,false));
+        assertTrue(NextChapter.readyToPrepare(75,true));
+        assertTrue(NextChapter.readyToPrepare(100,true));
     }
     @Test public void optInDefaultsOff() {
         Context c=RuntimeEnvironment.getApplication();

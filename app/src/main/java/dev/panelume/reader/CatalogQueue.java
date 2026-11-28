@@ -163,6 +163,21 @@ final class CatalogQueue {
         }
     }
 
+    // Prefer existing chapter identities over another release of the same number.
+    // The explicit identity (current reader or requested chapter) always wins.
+    List<String> preferredEpisodeIds(long series, String explicit) {
+        List<String> ids = new ArrayList<>();
+        if (explicit != null && !explicit.isEmpty()) ids.add(explicit);
+        if (series <= 0) return ids;
+        List<ShelfDb.Chapter> chapters = shelf.chapters(series);
+        for (ShelfDb.Chapter chapter : chapters)
+            if (chapter.available(shelf.root)) ids.add(chapter.catalogId);
+        for (ShelfDb.Chapter chapter : chapters)
+            if (!chapter.available(shelf.root)) ids.add(chapter.catalogId);
+        for (Job job : jobs(series)) ids.add(job.episode.id);
+        return ids;
+    }
+
     List<Job> jobs(long series) {
         return read(JOBS + (series > 0 ? " WHERE d.series_id=?" : "")
             + " ORDER BY d.state=2,d.bulk,d.id", series > 0 ? args(series) : null);

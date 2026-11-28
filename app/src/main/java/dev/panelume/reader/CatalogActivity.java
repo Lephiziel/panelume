@@ -213,11 +213,13 @@ public final class CatalogActivity extends PanelumeActivity {
         loading = true;
         problem = "";
         refresh(true);
+        List<String> preferred = queue.preferredEpisodeIds(localId,
+            requestedEpisode.isEmpty() ? awaiting : requestedEpisode);
         worker.execute(() -> {
             List<CatalogSource.Episode> found;
             String error = "";
             try {
-                found = source.episodes(title);
+                found = source.episodes(title, preferred);
             } catch (IOException | RuntimeException e) {
                 error = Fault.describe(this, e, R.string.source_error);
                 found = Collections.emptyList();

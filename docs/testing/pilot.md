@@ -62,3 +62,10 @@ Enable preparation, pass 75%, then simulate a temporary catalogue failure and co
 The signed preview is published at [v0.3.6](https://github.com/Lephiziel/panelume/releases/tag/v0.3.6). CI reports 45 tests, with zero failures or skips; this is not a substitute for physical-device testing.
 
 Open a catalogue-backed chapter and tap the new chapters icon in the reader toolbar. Confirm the catalogue opens for the same series, the current reader is removed from the stack, and selecting another chapter opens at its own saved position. Repeat when the catalogue is already lower in the activity stack for the same and a different title, and when the reader was launched from Downloads rather than Catalog. Check manual/imported chapters show no shortcut, toolbar accessibility labels, back navigation, process recreation and bookmark retention. No physical-device results yet.
+
+
+## Physical-device report — 2026-11-28, v0.3.6
+
+Owner-reported on OnePlus 10 Pro, latest Android version installed (exact OS/build not recorded). Ten of eleven manual checks passed: in-place update, search/download, zoom/scroll, bookmark persistence, chapter-list navigation, interrupted download recovery, reading time, offline archive removal and re-download, backup export/JSON merge, and opening-speed screen. No numeric latency samples or clean-install ZIP restore results supplied. These are aggregate self-reported outcomes, not a fully logged multi-device experiment.
+
+Two failures/observations: after enabling next-chapter preparation and reading Solo Leveling chapter 1, the end card offered the chapter list rather than the next chapter (source/network/queue state not confirmed); Atsumaru's Solo Leveling catalogue shows multiple copies of chapter numbers. Candidate changes: collapse repeated normalized numbers for Atsumaru while preserving explicitly requested/saved/queued identities; use visible scroll progress rather than contiguous page-count frontier for opt-in preparation; resolve navigation independently of bulk-download policy. Existing archive identities and completion rules are unchanged. Re-test both on the same device before release promotion.

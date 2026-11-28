@@ -24,6 +24,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,6 +48,8 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     private CatalogSource.Title catalogTitle;
     private NextChapter.Successor successor;
     private boolean preparationStarted;
+    private boolean lookupInFlight;
+    private boolean currentViewportRendered;
     private long nextPreparationCheck;
     private ReaderCanvas canvas;
     private Bookmark bookmark;
@@ -335,47 +338,65 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         } else {
             scheduleCompletion();
         }
-        if (NextChapter.readyToPrepare(percent,frontier,chapter.pages,allRendered)) maybePrepare();
+        currentViewportRendered = anyRendered;
+        maybePrepare();
+    }
+
+    private boolean wantsPreparation() {
+        return Prefs.prepareNext(this) && NextChapter.readyToPrepare(currentPercent,currentViewportRendered);
+    }
+
+    private boolean wantsLookup() {
+        return wantsPreparation() || (completed && atEnd);
     }
 
     private void maybePrepare() {
-        if (preparationStarted || catalogTitle==null || !Prefs.prepareNext(this) || !resumed
-            || !hasWindowFocus() || currentPercent<NextChapter.THRESHOLD) return;
+        if (destroyed || catalogTitle==null || lookupInFlight || !eligible() || !wantsLookup()) return;
+        if (successor!=null && (preparationStarted || !wantsPreparation()
+                || successor.episode==null || successor.episode.external)) return;
         long now=android.os.SystemClock.elapsedRealtime();
-        if (now<nextPreparationCheck) return;
+        if (now<nextPreparationCheck) {
+            // A pause removes the timer; resuming during cooldown must re-arm it.
+            main.removeCallbacks(retryPreparation);
+            main.postDelayed(retryPreparation,nextPreparationCheck-now+50);
+            return;
+        }
         nextPreparationCheck=now+5000;
         // Never start a network operation from the canvas draw traversal.
         main.post(() -> {
-            if (destroyed || preparationStarted) return;
-            if (!NextChapter.canPrepare(currentPercent,eligible(),Prefs.prepareNext(this),preparationNetworkAllowed())) {
-                if (Prefs.prepareNext(this) && currentPercent>=NextChapter.THRESHOLD)
-                    schedulePreparationRetry(15_000);
+            if (destroyed || lookupInFlight || !eligible() || !wantsLookup()) return;
+            if (successor!=null) {
+                if (!preparationStarted && wantsPreparation()) queueSuccessor(successor);
                 return;
             }
-            if (successor!=null) {
-                queueSuccessor(successor);
+            // Navigation can resolve the next catalogue entry even with auto-download
+            // disabled or bulk downloads restricted to Wi-Fi.
+            if (!catalogueNetworkAvailable()) {
+                schedulePreparationRetry(15_000);
                 return;
             }
             CatalogSource source=CatalogSource.named(catalogTitle.provider);
             if (source==null) return;
-            preparationStarted=true;
+            lookupInFlight=true;
             CatalogSource.Title title=catalogTitle;
             String current=chapter.catalogId;
+            List<String> preferred=new CatalogQueue(db).preferredEpisodeIds(chapter.seriesId,current);
             preparation.execute(() -> {
                 NextChapter.Successor found;
-                try { found=NextChapter.after(source.episodes(title),current); }
-                catch (IOException | RuntimeException error) {
-                    main.post(() -> {
-                        if (!destroyed) schedulePreparationRetry(30_000);
-                    });
-                    return;
-                }
+                try { found=NextChapter.after(source.episodes(title,preferred),current); }
+                catch (IOException | RuntimeException error) { found=null; }
+                NextChapter.Successor result=found;
                 main.post(() -> {
+                    lookupInFlight=false;
                     if (destroyed) return;
-                    successor=found;
+                    if (result==null) {
+                        schedulePreparationRetry(30_000);
+                        return;
+                    }
+                    successor=result;
                     updateEndCard();
-                    if (found==null || found.episode==null || found.episode.external) return;
-                    queueSuccessor(found);
+                    if (result.episode!=null && !result.episode.external && wantsPreparation())
+                        queueSuccessor(result);
                 });
             });
         });
@@ -383,8 +404,8 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
 
     private void queueSuccessor(NextChapter.Successor found) {
         if (found==null || found.episode==null || found.episode.external) return;
-        if (!NextChapter.canPrepare(currentPercent,eligible(),Prefs.prepareNext(this),preparationNetworkAllowed())) {
-            if (Prefs.prepareNext(this) && currentPercent>=NextChapter.THRESHOLD)
+        if (!wantsPreparation() || !NextChapter.canPrepare(currentPercent,eligible(),Prefs.prepareNext(this),preparationNetworkAllowed())) {
+            if (wantsPreparation())
                 schedulePreparationRetry(15_000);
             else preparationStarted=false;
             return;
@@ -415,9 +436,13 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         main.postDelayed(retryPreparation,delay+250);
     }
 
-    private boolean preparationNetworkAllowed() {
+    private boolean catalogueNetworkAvailable() {
         android.net.ConnectivityManager manager=getSystemService(android.net.ConnectivityManager.class);
-        return manager!=null && manager.getActiveNetwork()!=null && DownloadService.allowBulk(this);
+        return manager!=null && manager.getActiveNetwork()!=null;
+    }
+
+    private boolean preparationNetworkAllowed() {
+        return catalogueNetworkAvailable() && DownloadService.allowBulk(this);
     }
 
     private void applyEndVisibility() {
@@ -506,6 +531,7 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
         meter.setProgress(100);
         if (currentPage >= 0) counter.setText((currentPage + 1) + " / " + chapter.pages + "   ·   100%");
         updateEndCard();
+        maybePrepare();
     }
 
     private void openChapterList() {
@@ -530,10 +556,13 @@ public final class ReaderActivity extends PanelumeActivity implements ReaderCanv
     }
 
     private ShelfDb.Chapter nextSaved() {
-        if (successor==null) return db.next(chapter);
+        if (successor==null) {
+            ShelfDb.Chapter next=db.next(chapter);
+            return next!=null && next.available(db.root) ? next : null;
+        }
         if (successor.episode==null || successor.episode.external) return null;
         for (ShelfDb.Chapter saved:db.chapters(chapter.seriesId))
-            if (successor.episode.id.equals(saved.catalogId)) return saved;
+            if (successor.episode.id.equals(saved.catalogId) && saved.available(db.root)) return saved;
         return null;
     }
 

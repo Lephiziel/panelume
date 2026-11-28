@@ -84,12 +84,20 @@ final class AtsumaruSource implements CatalogSource {
     }
 
     @Override public List<Episode> episodes(Title title) throws IOException {
+        return episodes(title, Collections.emptyList());
+    }
+
+    @Override public List<Episode> episodes(Title title, List<String> preferredIds) throws IOException {
         if (!title.id.matches(ID)) throw new Fault(R.string.bad_url);
         String url = API + "/manga/allChapters?mangaId=" + Uri.encode(title.id);
-        return chapterList(http.text(url, "application/json", this::apiHost), title.id);
+        return chapterList(http.text(url, "application/json", this::apiHost), title.id, preferredIds);
     }
 
     List<Episode> chapterList(String body, String mangaId) throws IOException {
+        return chapterList(body, mangaId, Collections.emptyList());
+    }
+
+    List<Episode> chapterList(String body, String mangaId, List<String> preferredIds) throws IOException {
         try {
             JSONArray chapters = new JSONObject(body).getJSONArray("chapters");
             Map<String, Episode> result = new LinkedHashMap<>();
@@ -113,7 +121,19 @@ final class AtsumaruSource implements CatalogSource {
             List<Episode> ordered = new ArrayList<>(result.values());
             ordered.sort(Comparator.comparing((Episode episode) -> new BigDecimal(episode.number))
                 .thenComparing(episode -> episode.id));
-            return ordered;
+            // A title can expose several release IDs for the same normalized chapter number.
+            // Keep one deterministic representative, but prefer an explicitly requested,
+            // saved or queued ID so an upgrade does not abandon existing reading state.
+            Map<String, Integer> rank = new LinkedHashMap<>();
+            for (String id : preferredIds) rank.putIfAbsent(id, rank.size());
+            Map<String, Episode> byNumber = new LinkedHashMap<>();
+            for (Episode episode : ordered) {
+                Episode previous = byNumber.get(episode.number);
+                if (previous == null || rank.getOrDefault(episode.id, Integer.MAX_VALUE)
+                        < rank.getOrDefault(previous.id, Integer.MAX_VALUE))
+                    byNumber.put(episode.number, episode);
+            }
+            return new ArrayList<>(byNumber.values());
         } catch (JSONException e) {
             throw new Fault(R.string.source_error);
         }

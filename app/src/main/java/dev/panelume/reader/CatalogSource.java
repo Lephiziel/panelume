@@ -12,6 +12,9 @@ interface CatalogSource {
     default Title knownTitle(String query) { return null; }
     List<Title> search(String query) throws IOException;
     List<Episode> episodes(Title title) throws IOException;
+    default List<Episode> episodes(Title title, List<String> preferredIds) throws IOException {
+        return episodes(title);
+    }
     List<String> pages(Episode episode) throws IOException;
     boolean accepts(String host);
     boolean imageHost(String host);
