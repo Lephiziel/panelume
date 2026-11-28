@@ -63,6 +63,9 @@ The signed preview is published at [v0.3.6](https://github.com/Lephiziel/panelum
 
 Open a catalogue-backed chapter and tap the new chapters icon in the reader toolbar. Confirm the catalogue opens for the same series, the current reader is removed from the stack, and selecting another chapter opens at its own saved position. Repeat when the catalogue is already lower in the activity stack for the same and a different title, and when the reader was launched from Downloads rather than Catalog. Check manual/imported chapters show no shortcut, toolbar accessibility labels, back navigation, process recreation and bookmark retention. No physical-device results yet.
 
+## Android emulator regression gate
+
+Run `gradle :app:connectedDebugAndroidTest` on a disposable Android 15/API 35 emulator. The Android device regression workflow runs real native image/PDF decoding, portable ZIP restoration into a fresh isolated database, corrupt-backup rejection, and persistent bookmark/statistics checks with generated original fixtures. Inspect its instrumentation XML reports; a successful JVM test or build alone is insufficient. The workflow does not test the original release signing key, physical pinch gestures, live catalogues, or in-place upgrades from the previous signed stable APK. Physical-device and pilot gates remain separate. Never run these fixtures on a personal production library.
 
 ## Physical-device report — 2026-11-28, v0.3.6
 
